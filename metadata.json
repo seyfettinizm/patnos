@@ -1,0 +1,7 @@
+{
+  "name": "İzmir Patnoslular Derneği Müzik Kutusu",
+  "description": "Kültürel zenginliği modern teknolojiyle buluşturan, Türkçe ve Kürtçe dil seçenekli, yapay zeka destekli müzik platformu.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
