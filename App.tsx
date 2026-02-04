@@ -16,7 +16,7 @@ const App: React.FC = () => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPass, setAdminPass] = useState('');
-  const [likedSongs, setLikedSongs] = useState<string[]>([]); // Beğeni sistemi
+  const [likedSongs, setLikedSongs] = useState<string[]>([]);
 
   useEffect(() => {
     const loadSongs = async () => {
@@ -166,13 +166,19 @@ const App: React.FC = () => {
                         </div>
                       </div>
                       
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); toggleLike(song.id.toString()); }}
-                          className={`p-2 transition-colors ${likedSongs.includes(song.id.toString()) ? 'text-red-500' : 'text-neutral-500 hover:text-red-400'}`}
-                        >
-                          <i className={`${likedSongs.includes(song.id.toString()) ? 'fas' : 'far'} fa-heart`}></i>
-                        </button>
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-1">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); toggleLike(song.id.toString()); }}
+                            className={`p-2 transition-colors ${likedSongs.includes(song.id.toString()) ? 'text-red-500' : 'text-neutral-500 hover:text-red-400'}`}
+                          >
+                            <i className={`${likedSongs.includes(song.id.toString()) ? 'fas' : 'far'} fa-heart`}></i>
+                          </button>
+                          <span className="text-[10px] font-bold text-neutral-500">
+                            {likedSongs.includes(song.id.toString()) ? 1 : 0}
+                          </span>
+                        </div>
+                        
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleDownload(song); }} 
                           className="p-2 text-neutral-500 hover:text-amber-500 transition-colors"
@@ -191,7 +197,7 @@ const App: React.FC = () => {
 
           {activeTab === 'admin' && isAdmin && (
             <div className="p-8 bg-white/5 rounded-3xl border border-white/10">
-              <h2 className="text-2xl font-black mb-4">Yönetici Paneli</h2>
+              <h2 className="text-2xl font-black mb-4 text-amber-500">Yönetici Paneli</h2>
               <p className="text-neutral-400">Hoş geldiniz. Buradan şarkı ekleme işlemlerini yakında yapabileceksiniz.</p>
             </div>
           )}
