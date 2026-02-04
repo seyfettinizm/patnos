@@ -7,7 +7,7 @@ export const UI_STRINGS = {
   albumsTitle: { TR: "ALBÜMLER", KU: "ALBÛM" },
   popularNow: { TR: "Şu An Popüler", KU: "Niha Populer" },
   defaultGuestName: { TR: "Misafir Kullanıcı", KU: "Bikarhênerê Mêvan" }
-};
+}; // <-- İşte bu parantezin kapalı olması çok önemli!
 
 export const initialSongs = [];
 
