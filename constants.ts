@@ -1,12 +1,22 @@
+export const UI_STRINGS = {
+  searchPlaceholder: { TR: "Eser veya sanatçı ara...", KU: "Li berhem an hunermend bigere..." },
+  album1: { TR: "Patnos Türküleri", KU: "Stranên Panosê" },
+  album2: { TR: "Patnoslu Sanatçılar", KU: "Hunermendên Panosê" },
+  album3: { TR: "Dengbêjler", KU: "Dengbêj" },
+  album4: { TR: "Sizden Gelenler", KU: "Ji We Hatine" },
+  albumsTitle: { TR: "ALBÜMLER", KU: "ALBÛM" },
+  popularNow: { TR: "Şu An Popüler", KU: "Niha Populer" },
+  defaultGuestName: { TR: "Misafir Kullanıcı", KU: "Bikarhênerê Mêvan" }
+};
+
+export const initialSongs = [];
+
 export const getSongs = async () => {
   try {
-    // BURADAKİ URL: Vercel Blob'a yüklediğin songs.json dosyasının kopyaladığın URL'si olmalı
-    const BLOB_JSON_URL = "https://x5akq2yprlo5hmez.public.blob.vercel-storage.com/songs.json"; 
-    
+    const BLOB_JSON_URL = "https://x5akq2yprlo5hmez.public.blob.vercel-storage.com/songs.json";
     const response = await fetch(BLOB_JSON_URL, {
-      cache: 'no-store' // Her zaman güncel veriyi çekmesi için
+      cache: 'no-store'
     });
-    
     if (!response.ok) throw new Error('Veri çekilemedi');
     const data = await response.json();
     return data;
