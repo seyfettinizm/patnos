@@ -24,7 +24,7 @@ const App: React.FC = () => {
         const data = await getSongs();
         if (data && Array.isArray(data) && data.length > 0) {
           setSongs(data);
-          setCurrentSong(data[0]); // İlk şarkıyı hazırda tut
+          setCurrentSong(data[0]);
         }
       } catch (err) {
         console.error("Veri yüklenirken hata:", err);
@@ -33,7 +33,7 @@ const App: React.FC = () => {
     loadSongs();
   }, []);
 
-  // Şarkı arama ve kategori filtreleme
+  // Şarkı arama ve filtreleme
   const filteredSongs = useMemo(() => {
     return (songs || []).filter(s => {
       const matchesSearch = (s.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -75,6 +75,7 @@ const App: React.FC = () => {
     }
   };
 
+  // GÜVENLİ ALBÜM LİSTESİ (Soru işaretleri eklendi)
   const ALBUMS = [
     { id: 'Patnos Türküleri', label: UI_STRINGS?.album1?.[lang] || 'Albüm 1', icon: 'fa-guitar', color: 'from-blue-600 to-blue-400' },
     { id: 'Patnoslu Sanatçılar', label: UI_STRINGS?.album2?.[lang] || 'Albüm 2', icon: 'fa-microphone-lines', color: 'from-purple-600 to-purple-400' },
