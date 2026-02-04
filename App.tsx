@@ -17,7 +17,6 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPass, setAdminPass] = useState('');
 
-  // Verileri çekme işlemi
   useEffect(() => {
     const loadSongs = async () => {
       try {
@@ -33,11 +32,12 @@ const App: React.FC = () => {
     loadSongs();
   }, []);
 
-  // Şarkı arama ve filtreleme
   const filteredSongs = useMemo(() => {
     return (songs || []).filter(s => {
-      const matchesSearch = (s.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           (s.artist || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const title = s?.title?.toLowerCase() || '';
+      const artist = s?.artist?.toLowerCase() || '';
+      const search = searchTerm.toLowerCase();
+      const matchesSearch = title.includes(search) || artist.includes(search);
       const matchesCategory = selectedCategory ? s.category === selectedCategory : true;
       return matchesSearch && matchesCategory;
     });
@@ -55,36 +55,16 @@ const App: React.FC = () => {
     }
   };
 
-  const handleDownload = async (song: Song) => {
-    if (!song.url) return;
-    setDownloadingId(song.id.toString());
-    try {
-      const response = await fetch(song.url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${song.artist} - ${song.title}.mp3`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      console.error("İndirme hatası:", err);
-    } finally {
-      setDownloadingId(null);
-    }
-  };
-
-  // GÜVENLİ ALBÜM LİSTESİ (Soru işaretleri eklendi)
+  // ALBUMS listesini en güvenli (çökmez) hale getirdik
   const ALBUMS = [
-    { id: 'Patnos Türküleri', label: UI_STRINGS?.album1?.[lang] || 'Albüm 1', icon: 'fa-guitar', color: 'from-blue-600 to-blue-400' },
-    { id: 'Patnoslu Sanatçılar', label: UI_STRINGS?.album2?.[lang] || 'Albüm 2', icon: 'fa-microphone-lines', color: 'from-purple-600 to-purple-400' },
-    { id: 'Dengbêjler', label: UI_STRINGS?.album3?.[lang] || 'Albüm 3', icon: 'fa-drum', color: 'from-amber-600 to-amber-400' },
-    { id: 'Sizden Gelenler', label: UI_STRINGS?.album4?.[lang] || 'Albüm 4', icon: 'fa-users', color: 'from-emerald-600 to-emerald-400' },
+    { id: 'Patnos Türküleri', label: UI_STRINGS?.album1?.[lang] || 'Patnos Türküleri', icon: 'fa-guitar', color: 'from-blue-600 to-blue-400' },
+    { id: 'Patnoslu Sanatçılar', label: UI_STRINGS?.album2?.[lang] || 'Sanatçılar', icon: 'fa-microphone-lines', color: 'from-purple-600 to-purple-400' },
+    { id: 'Dengbêjler', label: UI_STRINGS?.album3?.[lang] || 'Dengbêjler', icon: 'fa-drum', color: 'from-amber-600 to-amber-400' },
+    { id: 'Sizden Gelenler', label: UI_STRINGS?.album4?.[lang] || 'Sizden Gelenler', icon: 'fa-users', color: 'from-emerald-600 to-emerald-400' },
   ];
 
   return (
-    <div className="flex h-screen bg-neutral-950 text-white selection:bg-amber-500/30 overflow-hidden font-['Outfit']">
+    <div className="flex h-screen bg-neutral-950 text-white overflow-hidden font-['Outfit']">
       <Sidebar 
         lang={lang} 
         activeTab={activeTab} 
@@ -130,7 +110,7 @@ const App: React.FC = () => {
             <section>
               {!selectedCategory && (
                 <div className="mb-8">
-                  <h3 className="text-xl font-black mb-6 uppercase tracking-tight">{UI_STRINGS?.albumsTitle?.[lang]}</h3>
+                  <h3 className="text-xl font-black mb-6 uppercase tracking-tight">{UI_STRINGS?.albumsTitle?.[lang] || "ALBÜMLER"}</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {ALBUMS.map((album) => (
                       <button key={album.id} onClick={() => setSelectedCategory(album.id as Category)} className={`h-40 rounded-3xl bg-gradient-to-br ${album.color} p-6 text-left flex flex-col justify-between shadow-xl`}>
@@ -145,7 +125,7 @@ const App: React.FC = () => {
               )}
 
               <div className="mb-12">
-                <h3 className="text-xl font-black mb-6 uppercase tracking-tight">{selectedCategory || UI_STRINGS?.popularNow?.[lang]}</h3>
+                <h3 className="text-xl font-black mb-6 uppercase tracking-tight">{selectedCategory || UI_STRINGS?.popularNow?.[lang] || "Popüler"}</h3>
                 <div className="space-y-2">
                   {filteredSongs.length > 0 ? filteredSongs.map((song, idx) => (
                     <div key={song.id} onClick={() => { setCurrentSong(song); setIsPlaying(true); }} className={`flex items-center justify-between p-4 rounded-2xl transition-all cursor-pointer hover:bg-white/5 ${currentSong?.id === song.id ? 'bg-amber-500/10 text-amber-500' : ''}`}>
@@ -157,12 +137,9 @@ const App: React.FC = () => {
                           <p className="text-xs text-neutral-500">{song.artist}</p>
                         </div>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); handleDownload(song); }} className="p-2 hover:text-amber-500">
-                        {downloadingId === song.id.toString() ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-download"></i>}
-                      </button>
                     </div>
                   )) : (
-                    <p className="text-neutral-500 text-center py-10">Şarkı bulunamadı...</p>
+                    <p className="text-neutral-500 text-center py-10">Şarkı yükleniyor veya bulunamadı...</p>
                   )}
                 </div>
               </div>
