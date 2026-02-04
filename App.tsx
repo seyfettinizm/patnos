@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPass, setAdminPass] = useState('');
+  const [likedSongs, setLikedSongs] = useState<string[]>([]); // Beğeni sistemi
 
   useEffect(() => {
     const loadSongs = async () => {
@@ -31,6 +32,12 @@ const App: React.FC = () => {
     };
     loadSongs();
   }, []);
+
+  const toggleLike = (songId: string) => {
+    setLikedSongs(prev => 
+      prev.includes(songId) ? prev.filter(id => id !== songId) : [...prev, songId]
+    );
+  };
 
   const filteredSongs = useMemo(() => {
     return (songs || []).filter(s => {
@@ -93,8 +100,6 @@ const App: React.FC = () => {
         adminPass={adminPass}
         setAdminPass={setAdminPass}
         handleAdminLogin={handleAdminLogin}
-        logo={null}
-        onGuestLogin={() => {}}
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
       />
@@ -111,7 +116,7 @@ const App: React.FC = () => {
                 <input 
                   type="text" 
                   placeholder={UI_STRINGS?.searchPlaceholder?.[lang] || "Ara..."} 
-                  className="bg-transparent border-none outline-none text-sm w-full" 
+                  className="bg-transparent border-none outline-none text-sm w-full text-white" 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
                 />
@@ -162,12 +167,15 @@ const App: React.FC = () => {
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        <button className="p-2 hover:text-red-500 transition-colors">
-                          <i className="far fa-heart"></i>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); toggleLike(song.id.toString()); }}
+                          className={`p-2 transition-colors ${likedSongs.includes(song.id.toString()) ? 'text-red-500' : 'text-neutral-500 hover:text-red-400'}`}
+                        >
+                          <i className={`${likedSongs.includes(song.id.toString()) ? 'fas' : 'far'} fa-heart`}></i>
                         </button>
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleDownload(song); }} 
-                          className="p-2 hover:text-amber-500 transition-colors"
+                          className="p-2 text-neutral-500 hover:text-amber-500 transition-colors"
                         >
                           {downloadingId === song.id.toString() ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-download"></i>}
                         </button>
@@ -179,6 +187,13 @@ const App: React.FC = () => {
                 </div>
               </div>
             </section>
+          )}
+
+          {activeTab === 'admin' && isAdmin && (
+            <div className="p-8 bg-white/5 rounded-3xl border border-white/10">
+              <h2 className="text-2xl font-black mb-4">Yönetici Paneli</h2>
+              <p className="text-neutral-400">Hoş geldiniz. Buradan şarkı ekleme işlemlerini yakında yapabileceksiniz.</p>
+            </div>
           )}
         </div>
 
