@@ -1,4 +1,4 @@
-export const UI_STRINGS = {
+export const UI_STRINGS: any = {
   searchPlaceholder: { TR: "Eser veya sanatçı ara...", KU: "Li berhem an hunermend bigere..." },
   album1: { TR: "Patnos Türküleri", KU: "Stranên Panosê" },
   album2: { TR: "Patnoslu Sanatçılar", KU: "Hunermendên Panosê" },
@@ -16,7 +16,8 @@ export const getSongs = async () => {
     const BLOB_JSON_URL = "https://x5akq2yprlo5hmez.public.blob.vercel-storage.com/songs.json";
     const response = await fetch(BLOB_JSON_URL, { cache: 'no-store' });
     if (!response.ok) throw new Error('Veri çekilemedi');
-    return await response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error("Hata:", error);
     return [];
