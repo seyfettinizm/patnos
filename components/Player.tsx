@@ -1,162 +1,66 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Song, Language } from '../types';
+import React, { useRef, useEffect } from 'react';
+import { Song } from '../types';
 
 interface PlayerProps {
-  currentSong: Song | null;
-  lang: Language;
+  song: Song;
   isPlaying: boolean;
-  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsPlaying: (val: boolean) => void;
   onNext: () => void;
   onPrev: () => void;
 }
 
-const Player: React.FC<PlayerProps> = ({ currentSong, lang, isPlaying, setIsPlaying, onNext, onPrev }) => {
-  const [volume, setVolume] = useState(70);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const progressRef = useRef<HTMLDivElement | null>(null);
+const Player: React.FC<PlayerProps> = ({ song, isPlaying, setIsPlaying }) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
+    if (isPlaying) {
+      audioRef.current?.play().catch(() => setIsPlaying(false));
+    } else {
+      audioRef.current?.pause();
     }
-  }, [volume]);
+  }, [isPlaying, song]);
 
-  useEffect(() => {
-    if (currentSong && audioRef.current) {
-      audioRef.current.src = currentSong.audioUrl || "";
-      if (isPlaying) {
-        audioRef.current.play().catch(e => console.error("Playback failed:", e));
-      }
-    }
-  }, [currentSong]);
-
-  const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play().catch(e => console.error("Playback failed:", e));
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 0);
-    }
-  };
-
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (progressRef.current && audioRef.current && duration > 0) {
-      const rect = progressRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const percentage = Math.max(0, Math.min(1, x / rect.width));
-      audioRef.current.currentTime = percentage * duration;
-    }
-  };
-
-  const formatTime = (time: number) => {
-    if (isNaN(time)) return "0:00";
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  if (!currentSong) return null;
+  if (!song) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-20 md:h-24 glass-panel border-t border-white/10 px-4 md:px-8 flex items-center justify-between z-[80] animate-in slide-in-from-bottom-full duration-500">
-      <audio 
-        ref={audioRef} 
-        onTimeUpdate={handleTimeUpdate} 
-        onEnded={onNext}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-      />
-      
-      {/* Song Info */}
-      <div className="flex items-center space-x-3 md:space-x-4 w-1/3">
-        <img 
-          src={currentSong.coverUrl} 
-          alt={currentSong.title} 
-          className="w-10 h-10 md:w-14 md:h-14 rounded-lg object-cover shadow-lg shrink-0"
-        />
-        <div className="overflow-hidden">
-          <h4 className="text-[11px] md:text-sm font-black truncate leading-tight">{currentSong.title}</h4>
-          <p className="text-[9px] md:text-xs text-neutral-500 truncate mt-0.5">{currentSong.artist}</p>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="flex flex-col items-center flex-1 max-w-lg px-2 md:px-0">
-        <div className="flex items-center space-x-4 md:space-x-8 mb-2">
-          <button className="text-neutral-500 hover:text-white transition-colors hidden sm:block">
-            <i className="fas fa-random text-xs"></i>
-          </button>
-          <button 
-            onClick={onPrev}
-            className="text-white hover:text-amber-500 transition-colors"
-          >
-            <i className="fas fa-step-backward text-sm md:text-lg"></i>
-          </button>
-          <button 
-            onClick={togglePlay}
-            className="w-9 h-9 md:w-11 md:h-11 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 active:scale-95 shadow-xl"
-          >
-            <i className={`fas ${isPlaying ? 'fa-pause text-xs md:text-sm' : 'fa-play text-xs md:text-sm ml-0.5'}`}></i>
-          </button>
-          <button 
-            onClick={onNext}
-            className="text-white hover:text-amber-500 transition-colors"
-          >
-            <i className="fas fa-step-forward text-sm md:text-lg"></i>
-          </button>
-          <button className="text-neutral-500 hover:text-white transition-colors hidden sm:block">
-            <i className="fas fa-redo text-xs"></i>
-          </button>
-        </div>
-        <div className="w-full flex items-center space-x-3 text-[8px] md:text-[10px] text-neutral-500 font-bold">
-          <span className="w-8 text-right shrink-0">{formatTime(currentTime)}</span>
-          <div 
-            ref={progressRef}
-            onClick={handleSeek}
-            className="flex-1 h-1 bg-neutral-800 rounded-full relative overflow-hidden cursor-pointer"
-          >
-            <div 
-              style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
-              className="absolute top-0 left-0 h-full bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]"
-            ></div>
+    <div className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-2xl border-t border-white/10 p-4 z-50">
+      <div className="max-w-screen-xl mx-auto flex items-center justify-between">
+        {/* Şarkı Bilgisi */}
+        <div className="flex items-center space-x-4 w-1/3">
+          <img src={song.cover} className="w-14 h-14 rounded-xl object-cover shadow-lg border border-white/5" alt="" />
+          <div className="overflow-hidden">
+            <h4 className="font-bold text-sm text-white truncate">{song.title}</h4>
+            <p className="text-xs text-neutral-400 truncate">{song.artist}</p>
           </div>
-          <span className="w-8 shrink-0">{formatTime(duration)}</span>
         </div>
-      </div>
 
-      {/* Volume - Hidden on Mobile */}
-      <div className="hidden md:flex items-center justify-end space-x-4 w-1/3">
-        <div className="flex items-center space-x-3 w-28 bg-white/5 rounded-full px-3 py-1.5 border border-white/5">
-          <i className="fas fa-volume-up text-[10px] text-neutral-500"></i>
-          <input 
-            type="range" 
-            min="0" 
-            max="100" 
-            value={volume}
-            onChange={(e) => setVolume(parseInt(e.target.value))}
-            className="w-full h-1 bg-neutral-800 rounded-full accent-amber-500 cursor-pointer"
+        {/* Oynatıcı Kontrolleri */}
+        <div className="flex flex-col items-center w-1/3 space-y-2">
+          <div className="flex items-center space-x-6">
+            <button className="text-neutral-400 hover:text-white transition-colors"><i className="fas fa-step-backward"></i></button>
+            <button 
+              onClick={() => setIsPlaying(!isPlaying)} 
+              className="w-12 h-12 rounded-full bg-amber-500 text-black flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-amber-500/20"
+            >
+              <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'} text-lg`}></i>
+            </button>
+            <button className="text-neutral-400 hover:text-white transition-colors"><i className="fas fa-step-forward"></i></button>
+          </div>
+          <audio 
+            ref={audioRef}
+            src={song.url} 
+            onEnded={() => setIsPlaying(false)}
+            className="w-full max-w-md h-8 accent-amber-500"
           />
         </div>
-      </div>
-      
-      {/* Mobile Right Controls - Like button */}
-      <div className="md:hidden flex items-center justify-end w-1/3">
-        <button className="w-10 h-10 flex items-center justify-center text-neutral-400">
-           <i className="far fa-heart"></i>
-        </button>
+
+        {/* Ses ve Diğerleri */}
+        <div className="w-1/3 flex justify-end items-center space-x-4">
+          <i className="fas fa-volume-up text-neutral-500 text-sm"></i>
+          <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
+            <div className="w-2/3 h-full bg-amber-500"></div>
+          </div>
+        </div>
       </div>
     </div>
   );
