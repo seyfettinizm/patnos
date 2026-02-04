@@ -1,7 +1,7 @@
 export const getSongs = async () => {
   try {
     // BURADAKİ URL: Vercel Blob'a yüklediğin songs.json dosyasının kopyaladığın URL'si olmalı
-    const BLOB_JSON_URL = "BURAYA_SONGS_JSON_URLSINI_YAPISTIR"; 
+    const BLOB_JSON_URL = "https://x5akq2yprlo5hmez.public.blob.vercel-storage.com/songs.json"; 
     
     const response = await fetch(BLOB_JSON_URL, {
       cache: 'no-store' // Her zaman güncel veriyi çekmesi için
