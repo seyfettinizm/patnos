@@ -18,6 +18,15 @@ const App: React.FC = () => {
   const [adminPass, setAdminPass] = useState('');
   const [likedSongs, setLikedSongs] = useState<string[]>([]);
 
+  // Yeni Şarkı Formu State'leri
+  const [newSong, setNewSong] = useState({
+    title: '',
+    artist: '',
+    category: 'Patnos Türküleri' as Category,
+    cover: '',
+    url: ''
+  });
+
   useEffect(() => {
     const loadSongs = async () => {
       try {
@@ -60,6 +69,18 @@ const App: React.FC = () => {
     } else {
       alert(lang === 'TR' ? 'Hatalı Şifre!' : 'Şîfreya Şaş!');
     }
+  };
+
+  const handleAddSong = (e: React.FormEvent) => {
+    e.preventDefault();
+    const songToAdd: Song = {
+      id: Date.now().toString(),
+      ...newSong
+    };
+    setSongs([songToAdd, ...songs]);
+    alert('Şarkı listeye eklendi! (Not: Kalıcı olması için JSON dosyasına eklenmelidir)');
+    setNewSong({ title: '', artist: '', category: 'Patnos Türküleri', cover: '', url: '' });
+    setActiveTab('home');
   };
 
   const handleDownload = async (song: Song) => {
@@ -196,9 +217,82 @@ const App: React.FC = () => {
           )}
 
           {activeTab === 'admin' && isAdmin && (
-            <div className="p-8 bg-white/5 rounded-3xl border border-white/10">
-              <h2 className="text-2xl font-black mb-4 text-amber-500">Yönetici Paneli</h2>
-              <p className="text-neutral-400">Hoş geldiniz. Buradan şarkı ekleme işlemlerini yakında yapabileceksiniz.</p>
+            <div className="max-w-2xl mx-auto p-8 bg-white/5 rounded-3xl border border-white/10 shadow-2xl">
+              <h2 className="text-3xl font-black mb-8 text-amber-500 flex items-center">
+                <i className="fas fa-plus-circle mr-3"></i> Yeni Şarkı Ekle
+              </h2>
+              
+              <form onSubmit={handleAddSong} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-neutral-400 uppercase ml-1">Şarkı Adı</label>
+                    <input 
+                      required
+                      type="text" 
+                      placeholder="Örn: Mihriban"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 text-white transition-all"
+                      value={newSong.title}
+                      onChange={(e) => setNewSong({...newSong, title: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-neutral-400 uppercase ml-1">Sanatçı</label>
+                    <input 
+                      required
+                      type="text" 
+                      placeholder="Örn: Seyfettin Esin"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 text-white transition-all"
+                      value={newSong.artist}
+                      onChange={(e) => setNewSong({...newSong, artist: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-neutral-400 uppercase ml-1">Kategori</label>
+                  <select 
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 text-white transition-all appearance-none"
+                    value={newSong.category}
+                    onChange={(e) => setNewSong({...newSong, category: e.target.value as Category})}
+                  >
+                    <option value="Patnos Türküleri">Patnos Türküleri</option>
+                    <option value="Patnoslu Sanatçılar">Patnoslu Sanatçılar</option>
+                    <option value="Dengbêjler">Dengbêjler</option>
+                    <option value="Sizden Gelenler">Sizden Gelenler</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-neutral-400 uppercase ml-1">Kapak Fotoğrafı URL</label>
+                  <input 
+                    required
+                    type="text" 
+                    placeholder="https://..."
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 text-white transition-all"
+                    value={newSong.cover}
+                    onChange={(e) => setNewSong({...newSong, cover: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-neutral-400 uppercase ml-1">Müzik Dosyası (MP3) URL</label>
+                  <input 
+                    required
+                    type="text" 
+                    placeholder="https://..."
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 text-white transition-all"
+                    value={newSong.url}
+                    onChange={(e) => setNewSong({...newSong, url: e.target.value})}
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-amber-500/20 uppercase tracking-wider"
+                >
+                  Şarkıyı Sisteme Kaydet
+                </button>
+              </form>
             </div>
           )}
         </div>
