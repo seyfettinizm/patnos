@@ -7,19 +7,16 @@ export const UI_STRINGS = {
   albumsTitle: { TR: "ALBÜMLER", KU: "ALBÛM" },
   popularNow: { TR: "Şu An Popüler", KU: "Niha Populer" },
   defaultGuestName: { TR: "Misafir Kullanıcı", KU: "Bikarhênerê Mêvan" }
-}; // <-- İşte bu parantezin kapalı olması çok önemli!
+};
 
 export const initialSongs = [];
 
 export const getSongs = async () => {
   try {
     const BLOB_JSON_URL = "https://x5akq2yprlo5hmez.public.blob.vercel-storage.com/songs.json";
-    const response = await fetch(BLOB_JSON_URL, {
-      cache: 'no-store'
-    });
+    const response = await fetch(BLOB_JSON_URL, { cache: 'no-store' });
     if (!response.ok) throw new Error('Veri çekilemedi');
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Hata:", error);
     return [];
