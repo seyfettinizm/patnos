@@ -55,7 +55,26 @@ const App: React.FC = () => {
     }
   };
 
-  // ALBUMS listesini en güvenli (çökmez) hale getirdik
+  const handleDownload = async (song: Song) => {
+    if (!song.url) return;
+    setDownloadingId(song.id.toString());
+    try {
+      const response = await fetch(song.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${song.artist} - ${song.title}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("İndirme hatası:", err);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   const ALBUMS = [
     { id: 'Patnos Türküleri', label: UI_STRINGS?.album1?.[lang] || 'Patnos Türküleri', icon: 'fa-guitar', color: 'from-blue-600 to-blue-400' },
     { id: 'Patnoslu Sanatçılar', label: UI_STRINGS?.album2?.[lang] || 'Sanatçılar', icon: 'fa-microphone-lines', color: 'from-purple-600 to-purple-400' },
@@ -113,7 +132,7 @@ const App: React.FC = () => {
                   <h3 className="text-xl font-black mb-6 uppercase tracking-tight">{UI_STRINGS?.albumsTitle?.[lang] || "ALBÜMLER"}</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {ALBUMS.map((album) => (
-                      <button key={album.id} onClick={() => setSelectedCategory(album.id as Category)} className={`h-40 rounded-3xl bg-gradient-to-br ${album.color} p-6 text-left flex flex-col justify-between shadow-xl`}>
+                      <button key={album.id} onClick={() => setSelectedCategory(album.id as Category)} className={`h-40 rounded-3xl bg-gradient-to-br ${album.color} p-6 text-left flex flex-col justify-between shadow-xl transition-transform hover:scale-105`}>
                         <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                           <i className={`fas ${album.icon} text-white`}></i>
                         </div>
@@ -126,9 +145,13 @@ const App: React.FC = () => {
 
               <div className="mb-12">
                 <h3 className="text-xl font-black mb-6 uppercase tracking-tight">{selectedCategory || UI_STRINGS?.popularNow?.[lang] || "Popüler"}</h3>
-                <div className="space-y-2">
+                <div className="grid gap-2">
                   {filteredSongs.length > 0 ? filteredSongs.map((song, idx) => (
-                    <div key={song.id} onClick={() => { setCurrentSong(song); setIsPlaying(true); }} className={`flex items-center justify-between p-4 rounded-2xl transition-all cursor-pointer hover:bg-white/5 ${currentSong?.id === song.id ? 'bg-amber-500/10 text-amber-500' : ''}`}>
+                    <div 
+                      key={song.id} 
+                      onClick={() => { setCurrentSong(song); setIsPlaying(true); }} 
+                      className={`group flex items-center justify-between p-4 rounded-2xl transition-all cursor-pointer hover:bg-white/5 ${currentSong?.id === song.id ? 'bg-amber-500/10 text-amber-500' : ''}`}
+                    >
                       <div className="flex items-center space-x-4">
                         <span className="text-sm font-bold text-neutral-600 w-4">{idx + 1}</span>
                         <img src={song.cover} className="w-12 h-12 rounded-lg object-cover" alt="" />
@@ -137,9 +160,21 @@ const App: React.FC = () => {
                           <p className="text-xs text-neutral-500">{song.artist}</p>
                         </div>
                       </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <button className="p-2 hover:text-red-500 transition-colors">
+                          <i className="far fa-heart"></i>
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDownload(song); }} 
+                          className="p-2 hover:text-amber-500 transition-colors"
+                        >
+                          {downloadingId === song.id.toString() ? <i className="fas fa-spinner animate-spin"></i> : <i className="fas fa-download"></i>}
+                        </button>
+                      </div>
                     </div>
                   )) : (
-                    <p className="text-neutral-500 text-center py-10">Şarkı yükleniyor veya bulunamadı...</p>
+                    <p className="text-neutral-500 text-center py-10">Şarkı bulunamadı...</p>
                   )}
                 </div>
               </div>
