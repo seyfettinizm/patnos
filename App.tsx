@@ -4,12 +4,6 @@ import { UI_STRINGS, getSongs, initialSongs } from './constants';
 import Sidebar from './components/Sidebar';
 import Player from './components/Player';
 
-interface Liker {
-  name: string;
-  avatar: string | null;
-  isCurrentUser?: boolean;
-}
-
 const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('TR');
   const [activeTab, setActiveTab] = useState('home');
@@ -19,8 +13,10 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  // Verileri JSON dosyasından çekme
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminPass, setAdminPass] = useState('');
+
   useEffect(() => {
     const loadSongs = async () => {
       const data = await getSongs();
@@ -31,22 +27,6 @@ const App: React.FC = () => {
     };
     loadSongs();
   }, []);
-
-  const [guestName] = useState(() => typeof window !== 'undefined' ? localStorage.getItem('guestName') || '' : '');
-  const [guestAvatar] = useState(() => typeof window !== 'undefined' ? localStorage.getItem('guestAvatar') || '' : '');
-  const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
-
-  const [banner] = useState({
-    image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&q=80",
-    titleTr: "Patnos'tan İzmir'e Bir Melodi...",
-    titleKu: "Ji Panosê Ber Bi Îzmîrê Melodiyek...",
-    descTr: "Köklerinizi hissedin. En sevdiğiniz Dengbêjler ve yöresel ezgiler tek bir kutuda toplandı.",
-    descKu: "Koka xwe hîs bikin. Dengbêjên we yên herî hezkirî û awazên herêmî di sindoqekê de hatin komkirin."
-  });
-
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPass, setAdminPass] = useState('');
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const filteredSongs = useMemo(() => {
     return songs.filter(s => {
@@ -106,7 +86,7 @@ const App: React.FC = () => {
         setAdminPass={setAdminPass}
         handleAdminLogin={handleAdminLogin}
         logo={null}
-        onGuestLogin={() => setIsGuestModalOpen(true)}
+        onGuestLogin={() => {}}
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
       />
@@ -123,7 +103,6 @@ const App: React.FC = () => {
                 <input type="text" placeholder={UI_STRINGS.searchPlaceholder[lang]} className="bg-transparent border-none outline-none text-sm w-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
             </div>
-
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-1 bg-white/5 rounded-full p-1">
                 <button onClick={() => setLang('TR')} className={`px-4 py-1 rounded-full text-xs font-bold ${lang === 'TR' ? 'bg-amber-500 text-black' : 'text-neutral-400'}`}>TR</button>
@@ -137,29 +116,19 @@ const App: React.FC = () => {
           {activeTab === 'home' && (
             <section>
               {!selectedCategory && (
-                <>
-                  <div className="relative rounded-3xl overflow-hidden h-60 md:h-80 mb-8">
-                    <img src={banner.image} alt="Banner" className="w-full h-full object-cover brightness-50" />
-                    <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                      <h2 className="text-3xl md:text-5xl font-black mb-2">{lang === 'TR' ? banner.titleTr : banner.titleKu}</h2>
-                      <p className="text-neutral-300 max-w-xl text-sm md:text-lg">{lang === 'TR' ? banner.descTr : banner.descKu}</p>
-                    </div>
+                <div className="mb-8">
+                  <h3 className="text-xl font-black mb-6 uppercase tracking-tight">{UI_STRINGS.albumsTitle[lang]}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {ALBUMS.map((album) => (
+                      <button key={album.id} onClick={() => setSelectedCategory(album.id as Category)} className={`h-40 rounded-3xl bg-gradient-to-br ${album.color} p-6 text-left flex flex-col justify-between shadow-xl`}>
+                        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                          <i className={`fas ${album.icon} text-white`}></i>
+                        </div>
+                        <span className="font-black text-lg">{album.label}</span>
+                      </button>
+                    ))}
                   </div>
-
-                  <div className="mb-8">
-                    <h3 className="text-xl font-black mb-6 uppercase tracking-tight">{UI_STRINGS.albumsTitle[lang]}</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {ALBUMS.map((album) => (
-                        <button key={album.id} onClick={() => setSelectedCategory(album.id as Category)} className={`h-40 rounded-3xl bg-gradient-to-br ${album.color} p-6 text-left flex flex-col justify-between shadow-xl`}>
-                          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                            <i className={`fas ${album.icon} text-white`}></i>
-                          </div>
-                          <span className="font-black text-lg">{album.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
+                </div>
               )}
 
               <div className="mb-12">
@@ -183,14 +152,6 @@ const App: React.FC = () => {
                 </div>
               </div>
             </section>
-          )}
-
-          {activeTab === 'admin' && (
-            <div className="p-10 text-center">
-              <h2 className="text-2xl font-black">Yönetici Paneli</h2>
-              <p className="text-neutral-400 mt-2">Şarkı eklemek için songs.json dosyasını kullanın.</p>
-              <button onClick={() => setIsAdmin(false)} className="mt-4 bg-white text-black px-6 py-2 rounded-full font-bold">Çıkış Yap</button>
-            </div>
           )}
         </div>
 
