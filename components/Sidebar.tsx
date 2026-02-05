@@ -1,8 +1,7 @@
 import React from 'react';
-import { Language } from '../types';
 
 interface SidebarProps {
-  lang: Language;
+  lang: string;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   isAdmin: boolean;
@@ -15,61 +14,59 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
-  lang, activeTab, setActiveTab, isAdmin, setAdminPass, 
+  activeTab, setActiveTab, isAdmin, setAdminPass, 
   adminPass, handleAdminLogin, isOpen, setIsOpen 
 }) => {
   return (
     <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-black border-r border-white/10 transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex flex-col h-full p-6 pb-44">
         
-        {/* LOGO ALANI - GÜNCEL VE ÇALIŞAN LİNK */}
+        {/* LOGO ALANI */}
         <div className="flex flex-col items-center mb-10 border-b border-white/5 pb-6">
-          <div className="w-28 h-28 mb-4 rounded-full overflow-hidden border-2 border-amber-500 shadow-2xl bg-white flex items-center justify-center">
+          <div className="w-28 h-28 mb-4 rounded-full overflow-hidden border-2 border-amber-500 bg-white flex items-center justify-center shadow-2xl">
             <img 
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/LOGO-removebg-preview-pS8GIsYy9H3L8qE8vFvM7fN8x9V7zI.png" 
-              alt="İzmir Patnoslular Derneği"
+              alt="Logo"
               className="w-full h-full object-contain p-1"
-              onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=LOGO'; }}
+              loading="eager"
             />
           </div>
           <div className="text-center px-2">
-            <h1 className="text-[11px] font-black text-white uppercase leading-tight tracking-tighter">İzmir Patnoslular</h1>
-            <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest mt-1">Sosyal Yardımlaşma Derneği</p>
+            <h1 className="text-[11px] font-black text-white uppercase tracking-tighter">İzmir Patnoslular</h1>
+            <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest mt-1 italic">Sosyal Yardımlaşma Derneği</p>
           </div>
         </div>
         
-        <nav className="space-y-2 flex-1 text-sm font-bold">
+        <nav className="space-y-2 flex-1 font-bold">
           <button onClick={() => { setActiveTab('home'); setIsOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'home' ? 'bg-amber-500 text-black' : 'text-neutral-400 hover:bg-white/5'}`}>
             <i className="fas fa-home"></i>
-            <span>{lang === 'TR' ? 'Ana Sayfa' : 'Sereke'}</span>
+            <span>Ana Sayfa</span>
           </button>
 
           <button onClick={() => { setActiveTab('contact'); setIsOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'contact' ? 'bg-amber-500 text-black' : 'text-neutral-400 hover:bg-white/5'}`}>
             <i className="fas fa-envelope"></i>
-            <span>{lang === 'TR' ? 'İletişim' : 'Têkili'}</span>
+            <span>İletişim</span>
           </button>
 
           {isAdmin && (
-            <button onClick={() => { setActiveTab('admin'); setIsOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl mt-4 transition-all bg-red-500 text-white shadow-lg shadow-red-500/20`}>
-              <i className="fas fa-user-shield text-sm"></i>
+            <button onClick={() => { setActiveTab('admin'); setIsOpen(false); }} className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl mt-4 bg-red-600 text-white">
+              <i className="fas fa-user-shield"></i>
               <span>Yönetici Paneli</span>
             </button>
           )}
         </nav>
 
-        {/* YÖNETİCİ GİRİŞİ */}
         {!isAdmin && (
-          <div className="bg-white/5 p-4 rounded-2xl border border-white/5 mt-auto mb-6">
+          <div className="bg-white/5 p-4 rounded-2xl border border-white/5 mt-auto">
             <form onSubmit={handleAdminLogin} className="space-y-3">
-              <p className="text-[10px] text-neutral-500 uppercase font-black tracking-widest px-1 text-center italic">Sistem Erişimi</p>
               <input 
                 type="password" 
                 placeholder="Şifre..." 
-                className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-amber-500 outline-none"
                 value={adminPass}
                 onChange={(e) => setAdminPass(e.target.value)}
               />
-              <button className="w-full bg-amber-500 text-black text-[10px] font-black py-2 rounded-lg hover:bg-amber-600 transition-colors">GİRİŞ YAP</button>
+              <button className="w-full bg-amber-500 text-black text-[10px] font-black py-2 rounded-lg">GİRİŞ</button>
             </form>
           </div>
         )}
