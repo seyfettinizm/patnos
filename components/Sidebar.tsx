@@ -1,48 +1,22 @@
 import React from 'react';
 
-interface SidebarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  isAdmin: boolean;
-  adminPass: string;
-  setAdminPass: (val: string) => void;
-  handleAdminLogin: (e: React.FormEvent) => void;
-  isOpen: boolean;
-  setIsOpen: (val: boolean) => void;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ 
-  activeTab, setActiveTab, isAdmin, setAdminPass, 
-  adminPass, handleAdminLogin, isOpen, setIsOpen 
-}) => {
+const Sidebar = ({ activeTab, setActiveTab, isOpen, setIsOpen }: any) => {
   return (
-    <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-black border-r border-white/10 transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="flex flex-col h-full p-6 pb-44">
-        
-        {/* LOGO - DOĞRUDAN İNTERNET ADRESİNDEN GELİR */}
-        <div className="flex flex-col items-center mb-10 border-b border-white/5 pb-6">
-          <div className="w-28 h-28 mb-4 rounded-full overflow-hidden border-2 border-amber-500 bg-white flex items-center justify-center shadow-2xl">
+    <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-black border-r border-white/10 transform transition-transform md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className="flex flex-col h-full p-6">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-24 h-24 mb-4 rounded-full overflow-hidden bg-white flex items-center justify-center border-2 border-amber-500">
             <img 
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/LOGO-removebg-preview-pS8GIsYy9H3L8qE8vFvM7fN8x9V7zI.png" 
-              alt="Logo"
+              alt="Logo" 
               className="w-full h-full object-contain p-1"
             />
           </div>
-          <div className="text-center">
-            <h1 className="text-[11px] font-black text-white uppercase">İzmir Patnoslular</h1>
-            <p className="text-[9px] font-bold text-amber-500 uppercase mt-1 italic">Sosyal Yardımlaşma Derneği</p>
-          </div>
+          <h1 className="text-[10px] font-bold text-white uppercase text-center">İzmir Patnoslular Derneği</h1>
         </div>
-        
-        <nav className="space-y-2 flex-1 font-bold">
-          <button onClick={() => { setActiveTab('home'); setIsOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl ${activeTab === 'home' ? 'bg-amber-500 text-black' : 'text-neutral-400'}`}>
-            <i className="fas fa-home"></i>
-            <span>Ana Sayfa</span>
-          </button>
-          <button onClick={() => { setActiveTab('contact'); setIsOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl ${activeTab === 'contact' ? 'bg-amber-500 text-black' : 'text-neutral-400'}`}>
-            <i className="fas fa-envelope"></i>
-            <span>İletişim</span>
-          </button>
+        <nav className="space-y-2">
+          <button onClick={() => { setActiveTab('home'); setIsOpen(false); }} className={`w-full text-left px-4 py-3 rounded-lg ${activeTab === 'home' ? 'bg-amber-500 text-black' : 'text-white'}`}>Ana Sayfa</button>
+          <button onClick={() => { setActiveTab('contact'); setIsOpen(false); }} className={`w-full text-left px-4 py-3 rounded-lg ${activeTab === 'contact' ? 'bg-amber-500 text-black' : 'text-white'}`}>İletişim</button>
         </nav>
       </div>
     </aside>
