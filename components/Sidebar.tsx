@@ -1,4 +1,3 @@
-// Sidebar.tsx içinde nav kısmına şu butonu ekle (veya dosyayı tamamen bununla değiştir)
 import React from 'react';
 import { Language } from '../types';
 
@@ -33,7 +32,6 @@ const Sidebar: React.FC<SidebarProps> = ({ lang, activeTab, setActiveTab, isAdmi
             <span>{lang === 'TR' ? 'Ana Sayfa' : 'Sereke'}</span>
           </button>
 
-          {/* İletişim Butonu Eklendi */}
           <button 
             onClick={() => setActiveTab('contact')} 
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'contact' ? 'bg-amber-500 text-black' : 'text-neutral-400 hover:bg-white/5'}`}
