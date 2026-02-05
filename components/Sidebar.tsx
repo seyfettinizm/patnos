@@ -22,12 +22,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-black border-r border-white/10 transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex flex-col h-full p-6 pb-40">
         
-        {/* LOGO ALANI - SABİTLENDİ */}
+        {/* LOGO ALANI */}
         <div className="flex flex-col items-center mb-10 border-b border-white/5 pb-6">
           <div className="w-24 h-24 mb-4 rounded-full overflow-hidden border-2 border-amber-500/50 shadow-xl bg-white flex items-center justify-center">
             <img 
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/LOGO-removebg-preview-pS8GIsYy9H3L8qE8vFvM7fN8x9V7zI.png" 
-              alt="Logo"
+              alt="İzmir Patnoslular Derneği Logo"
               className="w-full h-full object-contain p-1"
             />
           </div>
@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           )}
         </nav>
 
-        {/* YÖNETİCİ GİRİŞİ - PLAYER'IN ALTINDA KALMAZ */}
+        {/* YÖNETİCİ GİRİŞİ */}
         {!isAdmin && (
           <div className="bg-white/5 p-4 rounded-2xl border border-white/5 mt-auto mb-6">
             <form onSubmit={handleAdminLogin} className="space-y-3">
@@ -68,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 value={adminPass}
                 onChange={(e) => setAdminPass(e.target.value)}
               />
-              <button className="w-full bg-amber-500 text-black text-[10px] font-black py-2 rounded-lg hover:bg-amber-600">GİRİŞ YAP</button>
+              <button className="w-full bg-amber-500 text-black text-[10px] font-black py-2 rounded-lg hover:bg-amber-600 transition-colors">GİRİŞ YAP</button>
             </form>
           </div>
         )}
