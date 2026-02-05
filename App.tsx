@@ -8,7 +8,6 @@ const App: React.FC = () => {
   const [lang, setLang] = useState<'TR' | 'KU'>(() => (localStorage.getItem('appLang') as 'TR' | 'KU') || 'TR');
   const [activeCategory, setActiveCategory] = useState('Tümü');
 
-  // --- MERKEZİ DİL SÖZLÜĞÜ (GÜNCELLENDİ) ---
   const t: any = {
     TR: {
       search: "Şarkı, sanatçı ara...",
@@ -24,10 +23,10 @@ const App: React.FC = () => {
       adminTitle: "İÇERİK YÖNETİM PANELİ",
       saveBtn: "MÜZİĞİ SİSTEME EKLE",
       address: "Yeşilbağlar Mah. 637/33 Sok. No: 25 Buca/İzmir",
-      guest: "MİSAFİR"
+      labels: ["1. Müzik Adı", "2. Sanatçı Adı", "3. Kapak (URL)", "4. Müzik (URL)", "5. Klasör Seçin"]
     },
     KU: {
-      search: "Li stran, hunermend bigere...",
+      search: "Li stran bigere...",
       bannerSub: "HILBIARTINA HEFTEYÊ",
       bannerTitle: "Ji Patnosê ber bi Îzmîrê ve...",
       collTitle: "KOLEKSİYONÊN TAYBET",
@@ -40,7 +39,7 @@ const App: React.FC = () => {
       adminTitle: "PANELA RÊVEBERIYA NAVEROKÊ",
       saveBtn: "STRANÊ LI PERGALÊ ZÊDE BIKE",
       address: "Taxa Yeşilbağlar. 637/33 Sok. No: 25 Buca/Îzmîr",
-      guest: "MÊVAN"
+      labels: ["1. Navê Stranê", "2. Hunermend", "3. Berga Stranê (URL)", "4. Lînka Muzîkê (URL)", "5. Klasorê Hilbijêre"]
     }
   };
 
@@ -67,13 +66,9 @@ const App: React.FC = () => {
     { id: t[lang].categories[4], color: 'bg-emerald-600' }
   ];
 
-  const handleLike = (id: number) => {
-    setSongs(songs.map((s: any) => s.id === id ? { ...s, likes: (s.likes || 0) + 1 } : s));
-  };
-
   const filteredSongs = songs
     .filter((s: any) => activeCategory === 'Tümü' || activeCategory === 'Hemû' || s.category === activeCategory)
-    .sort((a: any, b: any) => b.likes - a.likes)
+    .sort((a: any, b: any) => (b.likes || 0) - (a.likes || 0))
     .slice(0, 8);
 
   return (
@@ -85,11 +80,9 @@ const App: React.FC = () => {
           <div className="flex bg-white/5 border border-white/10 rounded-full px-5 py-2 w-full max-w-xl">
             <input type="text" placeholder={t[lang].search} className="bg-transparent border-none outline-none text-sm w-full" />
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex bg-neutral-900 rounded-full p-1 border border-white/5">
-                <button onClick={() => setLang('TR')} className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all ${lang === 'TR' ? 'bg-amber-500 text-black' : 'text-neutral-500'}`}>TR</button>
-                <button onClick={() => setLang('KU')} className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all ${lang === 'KU' ? 'bg-amber-500 text-black' : 'text-neutral-500'}`}>KU</button>
-            </div>
+          <div className="flex bg-neutral-900 rounded-full p-1 border border-white/5">
+              <button onClick={() => setLang('TR')} className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all ${lang === 'TR' ? 'bg-amber-500 text-black' : 'text-neutral-500'}`}>TR</button>
+              <button onClick={() => setLang('KU')} className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all ${lang === 'KU' ? 'bg-amber-500 text-black' : 'text-neutral-500'}`}>KU</button>
           </div>
         </header>
 
@@ -114,83 +107,58 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-xl font-black mb-6 flex items-center space-x-3 uppercase tracking-tighter"><span className="w-1.5 h-6 bg-amber-500 rounded-full"></span><span>{t[lang].popTitle}</span></h3>
-                <div className="space-y-2">
-                  {filteredSongs.map((song: any) => (
-                    <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 transition-all group">
-                      <div className="flex items-center space-x-5 cursor-pointer flex-1" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
-                        <img src={song.cover} className="w-14 h-14 rounded-xl object-cover shadow-2xl" alt="" />
-                        <div><p className="font-bold text-sm">{song.title}</p><p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">{song.artist}</p></div>
-                      </div>
+              <div className="space-y-2">
+                {filteredSongs.map((song: any) => (
+                  <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 transition-all group">
+                    <div className="flex items-center space-x-5 cursor-pointer flex-1" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
+                      <img src={song.cover} className="w-14 h-14 rounded-xl object-cover shadow-2xl" alt="" />
+                      <div><p className="font-bold text-sm">{song.title}</p><p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">{song.artist}</p></div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* İLETİŞİM - ŞİMDİ TAMAMEN ÇİFT DİLLİ */}
           {activeTab === 'contact' && (
             <div className="max-w-4xl mx-auto py-10 space-y-8 animate-in slide-in-from-bottom-6 duration-700">
               <div className="bg-[#f59e0b] rounded-[3.5rem] p-12 md:p-16 text-center text-black shadow-2xl">
-                 <h2 className="text-5xl md:text-6xl font-[1000] mb-8 italic tracking-tighter uppercase leading-none">
-                   {t[lang].contactTitle}
-                 </h2>
-                 
+                 <h2 className="text-5xl md:text-6xl font-[1000] mb-8 italic tracking-tighter uppercase leading-none">{t[lang].contactTitle}</h2>
                  <div className="flex flex-col items-center justify-center space-y-4 mb-10">
-                    <p className="text-black font-[900] text-xl md:text-2xl italic leading-tight max-w-2xl">
-                      {t[lang].contactNot1}
-                    </p>
+                    <p className="text-black font-[900] text-xl md:text-2xl italic leading-tight max-w-2xl">{t[lang].contactNot1}</p>
                     <div className="w-12 h-0.5 bg-black/20 rounded-full my-2"></div>
-                    <p className="text-black/90 font-bold text-lg md:text-xl italic leading-relaxed max-w-2xl px-4">
-                      {t[lang].contactNot2}
-                    </p>
+                    <p className="text-black/90 font-bold text-lg md:text-xl italic leading-relaxed max-w-2xl px-4">{t[lang].contactNot2}</p>
                  </div>
-                 
-                 <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" className="inline-block bg-black text-white px-20 py-6 rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl hover:bg-neutral-900 transition-all active:scale-95">
-                   {t[lang].waBtn}
-                 </a>
+                 <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" className="inline-block bg-black text-white px-20 py-6 rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl hover:bg-neutral-900 transition-all">{t[lang].waBtn}</a>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 <div className="bg-neutral-900/80 border border-white/5 p-10 rounded-[3rem] text-center">
-                    <h3 className="text-amber-500 font-black text-[11px] uppercase tracking-widest mb-4">ADRES / NAVNÎŞAN</h3>
-                    <p className="font-black text-[11px] leading-relaxed italic text-neutral-300 uppercase">{t[lang].address}</p>
-                 </div>
-                 <div className="bg-neutral-900/80 border border-white/5 p-10 rounded-[3rem] text-center">
-                    <h3 className="text-amber-500 font-black text-[11px] uppercase tracking-widest mb-4">WHATSAPP / XETA ME</h3>
-                    <p className="font-black text-2xl text-neutral-200">0505 225 06 55</p>
-                 </div>
-                 <div className="bg-neutral-900/80 border border-white/5 p-10 rounded-[3rem] text-center">
-                    <h3 className="text-amber-500 font-black text-[11px] uppercase tracking-widest mb-4">E-POSTA / E-PEYAM</h3>
-                    <p className="font-black text-sm italic text-neutral-200">patnosumuz@gmail.com</p>
-                 </div>
+                 <div className="bg-neutral-900/80 p-10 rounded-[3rem] text-center"><h3 className="text-amber-500 font-black text-[11px] mb-4 uppercase">ADRES</h3><p className="font-black text-[11px] italic text-neutral-300">{t[lang].address}</p></div>
+                 <div className="bg-neutral-900/80 p-10 rounded-[3rem] text-center"><h3 className="text-amber-500 font-black text-[11px] mb-4 uppercase">WHATSAPP</h3><p className="font-black text-2xl text-neutral-200">0505 225 06 55</p></div>
+                 <div className="bg-neutral-900/80 p-10 rounded-[3rem] text-center"><h3 className="text-amber-500 font-black text-[11px] mb-4 uppercase">E-POSTA</h3><p className="font-black text-sm italic text-neutral-200">patnosumuz@gmail.com</p></div>
               </div>
             </div>
           )}
 
+          {/* 5'Lİ KONSÜL GERİ GELDİ */}
           {activeTab === 'admin' && (
-            <div className="max-w-4xl mx-auto py-10">
+            <div className="max-w-4xl mx-auto py-10 animate-in zoom-in">
                <div className="bg-neutral-900 p-12 rounded-[3.5rem] border border-white/10">
-                  <h2 className="text-3xl font-black text-amber-500 mb-10 uppercase italic tracking-tighter text-center">{t[lang].adminTitle}</h2>
-                  <form onSubmit={(e) => { e.preventDefault(); setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]); alert("Eklendi!"); }} className="space-y-6">
+                  <h2 className="text-3xl font-black text-amber-500 mb-10 uppercase italic text-center border-b border-white/5 pb-6">{t[lang].adminTitle}</h2>
+                  <form onSubmit={(e) => { e.preventDefault(); if(!newSong.title || !newSong.url) return alert("Hata!"); setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]); alert("Eklendi!"); }} className="space-y-6">
                     <div className="grid grid-cols-2 gap-6">
-                        <input type="text" placeholder="1. Müzik Adı" className="bg-black border border-white/10 p-5 rounded-2xl text-sm" onChange={e => setNewSong({...newSong, title: e.target.value})} />
-                        <input type="text" placeholder="2. Sanatçı Adı" className="bg-black border border-white/10 p-5 rounded-2xl text-sm" onChange={e => setNewSong({...newSong, artist: e.target.value})} />
+                      <div className="space-y-2"><label className="text-[10px] font-black text-amber-500/50 uppercase ml-2">{t[lang].labels[0]}</label><input type="text" className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-amber-500" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} /></div>
+                      <div className="space-y-2"><label className="text-[10px] font-black text-amber-500/50 uppercase ml-2">{t[lang].labels[1]}</label><input type="text" className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-amber-500" value={newSong.artist} onChange={e => setNewSong({...newSong, artist: e.target.value})} /></div>
                     </div>
-                    <button type="submit" className="w-full bg-amber-500 text-black font-black py-6 rounded-3xl uppercase">{t[lang].saveBtn}</button>
+                    <div className="space-y-2"><label className="text-[10px] font-black text-amber-500/50 uppercase ml-2">{t[lang].labels[2]}</label><input type="text" className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-amber-500" value={newSong.cover} onChange={e => setNewSong({...newSong, cover: e.target.value})} /></div>
+                    <div className="space-y-2"><label className="text-[10px] font-black text-amber-500/50 uppercase ml-2">{t[lang].labels[3]}</label><input type="text" className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-amber-500" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} /></div>
+                    <div className="space-y-2"><label className="text-[10px] font-black text-amber-500/50 uppercase ml-2">{t[lang].labels[4]}</label><select className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm text-white outline-none focus:border-amber-500 appearance-none" value={newSong.category} onChange={e => setNewSong({...newSong, category: e.target.value})}>{t[lang].categories.slice(1).map((c: string) => <option key={c} value={c}>{c}</option>)}</select></div>
+                    <button type="submit" className="w-full bg-amber-500 text-black font-black py-6 rounded-3xl uppercase tracking-widest text-sm hover:bg-white transition-all shadow-xl">{t[lang].saveBtn}</button>
                   </form>
                </div>
             </div>
           )}
         </div>
-
-        {currentSong && (
-          <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-white/5 h-28 px-10 z-50 backdrop-blur-2xl">
-            <Player song={currentSong} isPlaying={isPlaying} setIsPlaying={setIsPlaying} onNext={() => {}} onPrev={() => {}} />
-          </div>
-        )}
+        {currentSong && <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-white/5 h-28 px-10 z-50 backdrop-blur-2xl"><Player song={currentSong} isPlaying={isPlaying} setIsPlaying={setIsPlaying} onNext={() => {}} onPrev={() => {}} /></div>}
       </main>
     </div>
   );
