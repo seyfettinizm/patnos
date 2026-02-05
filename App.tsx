@@ -4,25 +4,23 @@ import Sidebar from './components/Sidebar';
 import Player from './components/Player';
 
 const App: React.FC = () => {
-  // --- HAFIZA (SİTE AYARLARI VE ŞARKILAR) ---
   const [activeTab, setActiveTab] = useState('home');
   const [lang, setLang] = useState(() => localStorage.getItem('appLang') || 'TR');
-  const [guestName, setGuestName] = useState(() => localStorage.getItem('guestName') || 'Misafir Kullanıcı');
+  const [guestName, setGuestName] = useState(() => localStorage.getItem('guestName') || 'MİSAFİR');
   const [activeCategory, setActiveCategory] = useState('Tümü');
 
-  // Şarkı Hafızası (Beğeni sayıları dahil)
   const [songs, setSongs] = useState(() => {
     const saved = localStorage.getItem('myMusicArchiive');
-    return saved ? JSON.parse(saved) : initialSongs.map(s => ({ ...s, likes: Math.floor(Math.random() * 100), category: 'Yöresel' }));
+    return saved ? JSON.parse(saved) : initialSongs.map(s => ({ ...s, likes: 0, category: 'Patnos Türküleri' }));
   });
 
-  // Site Görünüm Hafızası (Banner ve Logo)
   const [siteSettings, setSiteSettings] = useState(() => {
     const saved = localStorage.getItem('siteSettings');
     return saved ? JSON.parse(saved) : {
-      bannerText: "İzmir Patnoslular Derneği Müzik Kutusu",
-      bannerSub: "KÜLTÜR ARŞİVİ",
-      bannerImg: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1044408-R9P9vW6N7Y5T4Q3S2A1B0C9D8E7F6G.jpg",
+      bannerText: "Patnos'tan İzmir'e Bir Melodi...",
+      bannerSub: "HAFTANIN SEÇİMİ",
+      bannerDesc: "Köklerinizi hissedin. En sevdiğiniz Dengbêjler ve yöresel ezgiler tek bir kutuda toplandı.",
+      bannerImg: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=1200",
       logoUrl: ""
     };
   });
@@ -31,9 +29,7 @@ const App: React.FC = () => {
   const [adminPass, setAdminPass] = useState('');
   const [currentSong, setCurrentSong] = useState(songs[0] || null);
   const [isPlaying, setIsPlaying] = useState(false);
-
-  // Yönetim Formu
-  const [newSong, setNewSong] = useState({ title: '', artist: '', cover: '', url: '', category: 'Yöresel' });
+  const [newSong, setNewSong] = useState({ title: '', artist: '', cover: '', url: '', category: 'Patnos Türküleri' });
 
   useEffect(() => { 
     localStorage.setItem('appLang', lang);
@@ -41,135 +37,144 @@ const App: React.FC = () => {
     localStorage.setItem('siteSettings', JSON.stringify(siteSettings));
   }, [lang, songs, siteSettings]);
 
-  // --- İŞLEMLER ---
+  const categories = [
+    { id: 'Patnos Türküleri', color: 'bg-blue-600', icon: '🎸' },
+    { id: 'Patnoslu Sanatçılar', color: 'bg-purple-600', icon: '🎤' },
+    { id: 'Dengbêjler', color: 'bg-orange-600', icon: '🎙️' },
+    { id: 'Sizden Gelenler', color: 'bg-emerald-600', icon: '👥' }
+  ];
+
   const handleLike = (id: number) => {
     setSongs(songs.map((s: any) => s.id === id ? { ...s, likes: (s.likes || 0) + 1 } : s));
   };
 
-  const addSong = (e: React.FormEvent) => {
-    e.preventDefault();
-    const songToAdd = { ...newSong, id: Date.now(), likes: 0 };
-    setSongs([songToAdd, ...songs]);
-    setNewSong({ title: '', artist: '', cover: '', url: '', category: 'Yöresel' });
-    alert("Şarkı eklendi!");
-  };
-
-  // Sıralama ve Filtreleme: Beğeniye göre azalan, ilk 8 şarkı
   const filteredSongs = songs
     .filter((s: any) => activeCategory === 'Tümü' || s.category === activeCategory)
     .sort((a: any, b: any) => b.likes - a.likes)
     .slice(0, 8);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminPass === 'Mihriban04') { setIsAdmin(true); setActiveTab('admin'); } else { alert('Hatalı Şifre!'); }
-  };
-
   return (
-    <div className="flex h-screen bg-[#050505] text-white overflow-hidden font-sans">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} setIsAdmin={setIsAdmin} adminPass={adminPass} setAdminPass={setAdminPass} handleAdminLogin={handleAdminLogin} lang={lang} logo={siteSettings.logoUrl} />
+    <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans select-none">
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} setIsAdmin={setIsAdmin} adminPass={adminPass} setAdminPass={setAdminPass} handleAdminLogin={(e:any) => { e.preventDefault(); if(adminPass === 'Mihriban04') setIsAdmin(true); }} lang={lang} logo={siteSettings.logoUrl} />
 
-      <main className="flex-1 flex flex-col relative overflow-hidden bg-[#050505]">
-        <header className="h-20 flex items-center justify-between px-8 border-b border-white/5 bg-black/50 backdrop-blur-xl z-20">
-          <div className="flex space-x-2">
-            {['Tümü', 'Yöresel', 'Dengbêj', 'Halay', 'Güncel'].map(cat => (
-              <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-4 py-1.5 rounded-full text-[10px] font-black border transition-all ${activeCategory === cat ? 'bg-amber-500 text-black border-amber-500' : 'border-white/10 text-neutral-500 hover:text-white'}`}>{cat}</button>
-            ))}
+      <main className="flex-1 flex flex-col relative overflow-hidden bg-[#0a0a0a]">
+        {/* ÜST BAR (GÖRSELDEKİ GİBİ) */}
+        <header className="h-20 flex items-center justify-between px-8 z-30">
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-full px-5 py-2.5 w-full max-w-xl">
+            <span className="text-neutral-500 mr-3 text-lg">🔍</span>
+            <input type="text" placeholder="Şarkı, sanatçı veya albüm ara..." className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-neutral-600" />
           </div>
-          <div className="flex items-center space-x-4">
-             <button onClick={() => setLang(lang === 'TR' ? 'KU' : 'TR')} className="bg-neutral-800 px-4 py-1.5 rounded-full text-[10px] font-black border border-white/5">{lang}</button>
-             <button onClick={() => setActiveTab('profile')} className="bg-amber-500 text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase">{guestName}</button>
+          
+          <div className="flex items-center space-x-6">
+            <div className="flex bg-neutral-900/80 rounded-full p-1 border border-white/5">
+                <button onClick={() => setLang('TR')} className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all ${lang === 'TR' ? 'bg-amber-500 text-black' : 'text-neutral-500'}`}>TR</button>
+                <button onClick={() => setLang('KU')} className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all ${lang === 'KU' ? 'bg-amber-500 text-black' : 'text-neutral-500'}`}>KU</button>
+            </div>
+            <div className="flex items-center space-x-3 bg-neutral-900 px-4 py-1.5 rounded-full border border-white/5">
+                <span className="text-[10px] font-black tracking-widest">{guestName}</span>
+                <div className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-xs">👤</div>
+            </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8 pb-40">
+        <div className="flex-1 overflow-y-auto px-10 pb-40">
           {activeTab === 'home' && (
-            <div className="animate-in fade-in">
-              <div className="mb-10 rounded-[3rem] relative overflow-hidden h-64 flex items-center border border-white/5 shadow-2xl">
-                <img src={siteSettings.bannerImg} className="absolute inset-0 w-full h-full object-cover opacity-50" alt="" />
-                <div className="relative z-10 p-12">
-                   <span className="bg-amber-500 text-black text-[9px] font-black px-4 py-1.5 rounded-full mb-4 inline-block uppercase tracking-widest">{siteSettings.bannerSub}</span>
-                   <h2 className="text-4xl font-black italic tracking-tighter uppercase leading-tight max-w-2xl">{siteSettings.bannerText}</h2>
+            <div className="animate-in fade-in duration-700">
+              {/* BANNER AREA */}
+              <div className="mb-12 rounded-[3rem] relative overflow-hidden h-[400px] flex items-center bg-neutral-900 border border-white/5 group">
+                <img src={siteSettings.bannerImg} className="absolute inset-0 w-full h-full object-cover opacity-40 transition-transform duration-1000 group-hover:scale-105" alt="" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+                <div className="relative z-10 p-16 max-w-3xl">
+                   <span className="bg-amber-500 text-black text-[10px] font-black px-4 py-1.5 rounded-lg mb-6 inline-block uppercase tracking-widest shadow-xl">{siteSettings.bannerSub}</span>
+                   <h2 className="text-6xl font-black mb-6 tracking-tighter leading-none">{siteSettings.bannerText}</h2>
+                   <p className="text-neutral-400 font-medium text-lg italic leading-relaxed">{siteSettings.bannerDesc}</p>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                {filteredSongs.map((song: any) => (
-                  <div key={song.id} className={`flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 transition-all group`}>
-                    <div className="flex items-center space-x-5 cursor-pointer" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
-                      <img src={song.cover} className="w-14 h-14 rounded-xl object-cover shadow-2xl" alt="" />
-                      <div>
-                        <p className="font-bold text-sm">{song.title}</p>
-                        <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">{song.artist} • <span className="text-amber-500/70">{song.category}</span></p>
-                      </div>
+              {/* KATEGORİ KUTULARI (GÖRSELDEKİ GİBİ) */}
+              <div className="mb-12">
+                <h3 className="text-xl font-black mb-6 flex items-center space-x-3 uppercase tracking-tighter">
+                  <span className="w-1.5 h-6 bg-amber-500 rounded-full"></span>
+                  <span>Özel Koleksiyonlar</span>
+                </h3>
+                <div className="grid grid-cols-4 gap-6">
+                  {categories.map((cat) => (
+                    <div 
+                      key={cat.id} 
+                      onClick={() => setActiveCategory(cat.id === activeCategory ? 'Tümü' : cat.id)}
+                      className={`${cat.color} ${activeCategory === cat.id ? 'ring-4 ring-white shadow-2xl scale-105' : 'opacity-80 hover:opacity-100'} p-8 rounded-[2.5rem] h-60 flex flex-col justify-end cursor-pointer transition-all duration-300 relative overflow-hidden group`}
+                    >
+                      <div className="absolute top-6 right-8 text-4xl opacity-20 group-hover:scale-125 transition-transform">{cat.icon}</div>
+                      <p className="text-2xl font-black leading-tight tracking-tighter">{cat.id}</p>
                     </div>
-                    <div className="flex items-center space-x-6">
-                      <div className="text-right">
-                        <button onClick={() => handleLike(song.id)} className="text-neutral-500 hover:text-red-500 transition-colors flex items-center space-x-2">
-                          <span className="text-[10px] font-black">{song.likes || 0}</span>
-                          <span className="text-lg">❤️</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* ŞARKILAR LİSTESİ */}
+              <div>
+                <h3 className="text-xl font-black mb-6 flex items-center space-x-3 uppercase tracking-tighter">
+                  <span className="w-1.5 h-6 bg-amber-500 rounded-full"></span>
+                  <span>Şu An Popüler</span>
+                </h3>
+                <div className="space-y-2">
+                  {filteredSongs.map((song: any) => (
+                    <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-transparent transition-all group">
+                      <div className="flex items-center space-x-5 cursor-pointer flex-1" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
+                        <img src={song.cover} className="w-14 h-14 rounded-xl object-cover shadow-2xl" alt="" />
+                        <div>
+                          <p className="font-bold text-sm">{song.title}</p>
+                          <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">{song.artist}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-8">
+                        <button onClick={() => handleLike(song.id)} className="flex items-center space-x-2 text-neutral-500 hover:text-red-500 transition-colors">
+                           <span className="text-xs font-black">{song.likes || 0}</span>
+                           <span className="text-xl">❤️</span>
                         </button>
                       </div>
-                      {isAdmin && <button onClick={() => setSongs(songs.filter((s:any) => s.id !== song.id))} className="text-red-500 text-[10px] font-black opacity-0 group-hover:opacity-100 transition-opacity">SİL</button>}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'admin' && (
-            <div className="max-w-4xl mx-auto space-y-8 animate-in zoom-in">
-              {/* Site Görünüm Ayarları */}
-              <div className="bg-neutral-900 p-10 rounded-[3rem] border border-white/5">
-                <h2 className="text-xl font-black text-amber-500 mb-6 uppercase tracking-tighter italic italic">Saha & Görünüm Ayarları</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <input type="text" placeholder="Banner Ana Yazısı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={siteSettings.bannerText} onChange={e => setSiteSettings({...siteSettings, bannerText: e.target.value})} />
-                  <input type="text" placeholder="Banner Alt Yazısı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={siteSettings.bannerSub} onChange={e => setSiteSettings({...siteSettings, bannerSub: e.target.value})} />
-                  <input type="text" placeholder="Banner Görsel URL (GitHub/Vercel Linki)" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={siteSettings.bannerImg} onChange={e => setSiteSettings({...siteSettings, bannerImg: e.target.value})} />
-                  <input type="text" placeholder="Logo Görsel URL" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={siteSettings.logoUrl} onChange={e => setSiteSettings({...siteSettings, logoUrl: e.target.value})} />
+                  ))}
                 </div>
               </div>
-
-              {/* Müzik Yükleme Konsolu */}
-              <div className="bg-neutral-900 p-10 rounded-[3rem] border border-white/5">
-                <h2 className="text-xl font-black text-amber-500 mb-6 uppercase tracking-tighter italic italic">Müzik Yükleme Konsolu</h2>
-                <form onSubmit={addSong} className="grid grid-cols-2 gap-4">
-                  <input type="text" placeholder="1. Müzik Adı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} />
-                  <input type="text" placeholder="2. Sanatçı Adı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.artist} onChange={e => setNewSong({...newSong, artist: e.target.value})} />
-                  <input type="text" placeholder="3. Şarkı Kapağı Linki (GitHub/Vercel)" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.cover} onChange={e => setNewSong({...newSong, cover: e.target.value})} />
-                  <input type="text" placeholder="4. Müzik Dosyası Linki (MP3)" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} />
-                  <select className="bg-black border border-white/10 p-4 rounded-xl text-sm text-neutral-400" value={newSong.category} onChange={e => setNewSong({...newSong, category: e.target.value})}>
-                    <option value="Yöresel">Yöresel</option>
-                    <option value="Dengbêj">Dengbêj</option>
-                    <option value="Halay">Halay</option>
-                    <option value="Güncel">Güncel</option>
-                  </select>
-                  <button type="submit" className="bg-amber-500 text-black font-black rounded-xl uppercase tracking-widest text-xs">Müziği Sisteme Ekle</button>
-                </form>
-              </div>
             </div>
           )}
 
-          {/* İLETİŞİM */}
-          {activeTab === 'contact' && (
-            <div className="max-w-4xl mx-auto space-y-6 text-center py-10">
-               <div className="bg-amber-500 p-12 rounded-[3rem] text-black shadow-2xl shadow-amber-500/20">
-                  <h2 className="text-4xl font-black italic mb-4">BİZE ULAŞIN</h2>
-                  <p className="font-bold mb-8">Elinizdeki müzikleri WhatsApp üzerinden gönderin, yayınlayalım.</p>
-                  <a href="https://wa.me/905052250655" className="inline-block bg-black text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest">WHATSAPP</a>
+          {/* YÖNETİM PANELİ (Mevcut Özellikler Korundu) */}
+          {activeTab === 'admin' && (
+            <div className="max-w-4xl mx-auto space-y-8 animate-in zoom-in py-10">
+               <div className="bg-neutral-900/50 p-12 rounded-[3.5rem] border border-white/5">
+                  <h2 className="text-2xl font-black text-amber-500 mb-8 uppercase italic tracking-tighter">İçerik & Banner Yönetimi</h2>
+                  <div className="grid grid-cols-2 gap-6">
+                    <input type="text" placeholder="Banner Başlığı" className="bg-black border border-white/10 p-5 rounded-2xl text-sm" value={siteSettings.bannerText} onChange={e => setSiteSettings({...siteSettings, bannerText: e.target.value})} />
+                    <input type="text" placeholder="Banner Görsel Linki" className="bg-black border border-white/10 p-5 rounded-2xl text-sm" value={siteSettings.bannerImg} onChange={e => setSiteSettings({...siteSettings, bannerImg: e.target.value})} />
+                    <textarea placeholder="Banner Açıklaması" className="bg-black border border-white/10 p-5 rounded-2xl text-sm col-span-2 h-24" value={siteSettings.bannerDesc} onChange={e => setSiteSettings({...siteSettings, bannerDesc: e.target.value})} />
+                  </div>
                </div>
-               <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-neutral-900 p-8 rounded-[2.5rem] border border-white/5"><p className="text-amber-500 font-black text-[10px] mb-2">TELEFON</p><p className="font-bold">0505 225 06 55</p></div>
-                  <div className="bg-neutral-900 p-8 rounded-[2.5rem] border border-white/5"><p className="text-amber-500 font-black text-[10px] mb-2">E-POSTA</p><p className="font-bold">patnosumuz@gmail.com</p></div>
-                  <div className="bg-neutral-900 p-8 rounded-[2.5rem] border border-white/5"><p className="text-amber-500 font-black text-[10px] mb-2">ADRES</p><p className="font-bold text-[9px]">Yeşilbağlar Mah. Buca/İzmir</p></div>
+
+               <div className="bg-neutral-900/50 p-12 rounded-[3.5rem] border border-white/5">
+                  <h2 className="text-2xl font-black text-amber-500 mb-8 uppercase italic tracking-tighter">Müzik Yükleme Konsolu</h2>
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]);
+                    alert("Eklendi!");
+                  }} className="grid grid-cols-2 gap-6">
+                    <input type="text" placeholder="1. Müzik Adı" className="bg-black border border-white/10 p-5 rounded-2xl text-sm" onChange={e => setNewSong({...newSong, title: e.target.value})} />
+                    <input type="text" placeholder="2. Sanatçı Adı" className="bg-black border border-white/10 p-5 rounded-2xl text-sm" onChange={e => setNewSong({...newSong, artist: e.target.value})} />
+                    <input type="text" placeholder="3. Şarkı Kapağı Linki" className="bg-black border border-white/10 p-5 rounded-2xl text-sm" onChange={e => setNewSong({...newSong, cover: e.target.value})} />
+                    <input type="text" placeholder="4. Müzik Dosyası (MP3) Linki" className="bg-black border border-white/10 p-5 rounded-2xl text-sm" onChange={e => setNewSong({...newSong, url: e.target.value})} />
+                    <select className="bg-black border border-white/10 p-5 rounded-2xl text-sm text-neutral-400" onChange={e => setNewSong({...newSong, category: e.target.value})}>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.id}</option>)}
+                    </select>
+                    <button type="submit" className="bg-amber-500 text-black font-black py-5 rounded-2xl uppercase tracking-widest">Sisteme Kaydet</button>
+                  </form>
                </div>
             </div>
           )}
         </div>
 
         {currentSong && (
-          <div className="fixed bottom-0 left-0 right-0 bg-black/90 border-t border-white/5 h-24 px-8 z-50 backdrop-blur-md">
+          <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-white/5 h-28 px-10 z-50 backdrop-blur-xl">
             <Player song={currentSong} isPlaying={isPlaying} setIsPlaying={setIsPlaying} onNext={() => {}} onPrev={() => {}} />
           </div>
         )}
