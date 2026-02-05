@@ -28,15 +28,15 @@ const Sidebar: React.FC<SidebarProps> = ({
               <p className="text-[8px] font-bold text-amber-500 uppercase mt-1">Müzik Kutusu</p>
             </div>
           </div>
-          <p className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest mb-4">Menü</p>
+          <p className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest mb-4 italic">Menü</p>
         </div>
         
         <nav className="space-y-2 flex-1">
           <button onClick={() => { setActiveTab('home'); setIsOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'home' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'text-neutral-400 hover:bg-white/5'}`}>
-            <span className="font-bold text-sm">Ana Sayfa</span>
+            <span className="font-bold text-sm">🏠 Ana Sayfa</span>
           </button>
           <button onClick={() => { setActiveTab('contact'); setIsOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'contact' ? 'bg-amber-500 text-black' : 'text-neutral-400 hover:bg-white/5'}`}>
-            <span className="font-bold text-sm">İletişim</span>
+            <span className="font-bold text-sm">📞 İletişim</span>
           </button>
         </nav>
 
@@ -45,7 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {!isAdmin ? (
             <form onSubmit={handleAdminLogin} className="space-y-3">
               <div className="bg-neutral-900/50 p-4 rounded-2xl border border-white/5">
-                <p className="text-[8px] text-neutral-500 font-black text-center uppercase mb-3 tracking-widest text-green-500">Yönetici Aktif</p>
+                <p className="text-[8px] text-green-500 font-black text-center uppercase mb-3 tracking-widest">Sistem Erişimi</p>
                 <input 
                   type="password" 
                   placeholder="Şifre..." 
@@ -53,12 +53,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                   value={adminPass}
                   onChange={(e) => setAdminPass(e.target.value)}
                 />
-                <button className="w-full bg-amber-500 text-black text-[9px] font-black py-2 rounded-lg mt-3 hover:bg-amber-600 transition-colors uppercase tracking-widest">GİRİŞ</button>
+                <button className="w-full bg-amber-500 text-black text-[9px] font-black py-2 rounded-lg mt-3 hover:bg-amber-600 transition-colors uppercase tracking-widest">GİRİŞ YAP</button>
               </div>
             </form>
           ) : (
             <div className="bg-green-500/10 p-3 rounded-xl border border-green-500/20 text-center">
-               <p className="text-[10px] text-green-500 font-bold uppercase italic">Panel Aktif</p>
+               <p className="text-[10px] text-green-500 font-bold uppercase italic">Yönetici Aktif</p>
             </div>
           )}
         </div>
