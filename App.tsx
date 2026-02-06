@@ -11,9 +11,12 @@ const App: React.FC = () => {
   // LOGO VE BANNER AYARLARI
   const [logoUrl, setLogoUrl] = useState(() => localStorage.getItem('appLogo') || "");
   const [bannerUrl, setBannerUrl] = useState(() => localStorage.getItem('appBanner') || "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=1200");
-  const [bannerText, setBannerText] = useState(() => localStorage.getItem('appBannerText') || "İZMİR'DEN PATNOS'A SEVGİLER");
+  
+  // DİNAMİK BANNER METİNLERİ
+  const [bannerTR, setBannerTR] = useState(() => localStorage.getItem('bannerTR') || "İZMİR'DEN PATNOS'A SEVGİLER");
+  const [bannerKU, setBannerKU] = useState(() => localStorage.getItem('bannerKU') || "JI ÎZMÎRÊ JI BO PANOSÊ SILAV");
 
-  // KATEGORİ GÖRSELLERİ
+  // KATEGORİ GÖRSELLERİ VE İSİMLERİ (ÇİFT DİLLİ)
   const [catImages, setCatImages] = useState(() => {
     const saved = localStorage.getItem('appCatImages');
     return saved ? JSON.parse(saved) : {
@@ -39,9 +42,13 @@ const App: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [newSong, setNewSong] = useState({ title: '', artist: '', cover: '', url: '', category: 'Patnos Türküleri' });
 
-  // DİL VE ÇEVİRİ SİSTEMİ (GERİ GELDİ)
+  // TÜM ARAYÜZ ÇEVİRİLERİ
   const t: any = {
     TR: {
+      search: "Ara...",
+      explore: "KEŞFET",
+      collections: "ÖZEL KOLEKSİYONLAR",
+      banner: bannerTR,
       contactTitle: "MÜZİĞİNİ PAYLAŞ",
       contactSub: '"Tozlu raflarda unutulmuş bir kayıt mı var?"',
       contactDesc: "Kültürel mirasımızı birlikte ilmek ilmek işleyelim. Elinizdeki yöresel kayıtları bize ulaştırın.",
@@ -50,9 +57,14 @@ const App: React.FC = () => {
       waNum: "0505 225 06 55",
       adrTitle: "ADRES",
       adrText: "Yeşilbağlar Mah. 637/33 Sok. No: 25 Buca/İzmir",
-      mailTitle: "E-POSTA"
+      mailTitle: "E-POSTA",
+      catNames: { "Patnos Türküleri": "Patnos Türküleri", "Patnoslu Sanatçılar": "Patnoslu Sanatçılar", "Dengbêjler": "Dengbêjler", "Sizden Gelenler": "Sizden Gelenler" }
     },
     KU: {
+      search: "Bigere...",
+      explore: "KEŞIF BIKE",
+      collections: "KOLEKSIYONÊN TAYBET",
+      banner: bannerKU,
       contactTitle: "MUZÎKA XWE PARVE BIKE",
       contactSub: '"Ma qeydeke ji bîr kiriye heye?"',
       contactDesc: "Werin em mîrateya xwe ya çandî bi hev re biparêzin. Qeydên xwe ji me re bişînin.",
@@ -61,15 +73,16 @@ const App: React.FC = () => {
       waNum: "0505 225 06 55",
       adrTitle: "ADRES",
       adrText: "Taxa Yeşilbağlar. 637/33 Sok. No: 25 Buca/Îzmîr",
-      mailTitle: "E-POSTA"
+      mailTitle: "E-POSTA",
+      catNames: { "Patnos Türküleri": "Stranên Panosê", "Patnoslu Sanatçılar": "Hunermendên Panosî", "Dengbêjler": "Dengbêj", "Sizden Gelenler": "Ji We Hatiye" }
     }
   };
 
   const categories = [
-    { name: "Patnos Türküleri", color: "from-blue-600/80" },
-    { name: "Patnoslu Sanatçılar", color: "from-purple-600/80" },
-    { name: "Dengbêjler", color: "from-orange-600/80" },
-    { name: "Sizden Gelenler", color: "from-emerald-600/80" }
+    { id: "Patnos Türküleri", color: "from-blue-600/80" },
+    { id: "Patnoslu Sanatçılar", color: "from-purple-600/80" },
+    { id: "Dengbêjler", color: "from-orange-600/80" },
+    { id: "Sizden Gelenler", color: "from-emerald-600/80" }
   ];
 
   useEffect(() => { 
@@ -77,16 +90,11 @@ const App: React.FC = () => {
     localStorage.setItem('myLikedSongs', JSON.stringify(likedSongs));
     localStorage.setItem('appLogo', logoUrl);
     localStorage.setItem('appBanner', bannerUrl);
-    localStorage.setItem('appBannerText', bannerText);
+    localStorage.setItem('bannerTR', bannerTR);
+    localStorage.setItem('bannerKU', bannerKU);
     localStorage.setItem('appCatImages', JSON.stringify(catImages));
     localStorage.setItem('appLang', lang);
-  }, [songs, likedSongs, logoUrl, bannerUrl, bannerText, catImages, lang]);
-
-  const handleLike = (id: number) => {
-    if (likedSongs.includes(id)) return;
-    setSongs(songs.map((s: any) => s.id === id ? { ...s, likes: (s.likes || 0) + 1 } : s));
-    setLikedSongs([...likedSongs, id]);
-  };
+  }, [songs, likedSongs, logoUrl, bannerUrl, bannerTR, bannerKU, catImages, lang]);
 
   const editSong = (id: number) => {
     const song = songs.find((s:any) => s.id === id);
@@ -108,9 +116,8 @@ const App: React.FC = () => {
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} setIsAdmin={setIsAdmin} lang={lang} logoUrl={logoUrl} setLang={setLang} />
 
       <main className="flex-1 flex flex-col relative overflow-hidden bg-gradient-to-b from-neutral-900/10 to-black">
-        {/* HEADER - DİL SEÇİCİ İLE */}
         <header className="h-16 flex items-center justify-between px-8 z-30 shrink-0 border-b border-white/5 backdrop-blur-md bg-black/20">
-          <input type="text" placeholder="Ara..." className="bg-white/5 border border-white/10 rounded-full px-6 py-2 text-xs w-full max-w-xl outline-none" />
+          <input type="text" placeholder={t[lang].search} className="bg-white/5 border border-white/10 rounded-full px-6 py-2 text-xs w-full max-w-xl outline-none focus:border-amber-500" />
           <div className="flex bg-black/40 rounded-full p-1 border border-white/10 ml-4">
             <button onClick={() => setLang('TR')} className={`px-4 py-1 rounded-full text-[10px] font-black transition-all ${lang === 'TR' ? 'bg-amber-500 text-black' : 'text-white hover:bg-white/5'}`}>TR</button>
             <button onClick={() => setLang('KU')} className={`px-4 py-1 rounded-full text-[10px] font-black transition-all ${lang === 'KU' ? 'bg-amber-500 text-black' : 'text-white hover:bg-white/5'}`}>KU</button>
@@ -119,25 +126,28 @@ const App: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto px-4 md:px-10 pb-40 pt-8 scrollbar-hide">
           
-          {/* ANA SAYFA - MODERN KATEGORİLER KORUNDU */}
           {activeTab === 'home' && (
             <div className="animate-in fade-in duration-700">
                <div className="mb-8 rounded-[3.5rem] relative overflow-hidden h-[300px] flex items-center shadow-2xl">
                 <img src={bannerUrl} className="absolute inset-0 w-full h-full object-cover opacity-50" alt="" />
                 <div className="absolute inset-0 bg-gradient-to-r from-black via-black/20 to-transparent" />
                 <div className="relative z-10 p-16">
-                  <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter leading-none">{bannerText}</h2>
+                  <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter leading-none">{t[lang].banner}</h2>
                 </div>
               </div>
               
+              <h3 className="text-[10px] font-black mb-6 flex items-center tracking-widest text-neutral-500 uppercase">
+                <span className="w-6 h-[2px] bg-amber-500 mr-3"></span> {t[lang].collections}
+              </h3>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 {categories.map((cat) => (
-                  <div key={cat.name} onClick={() => setActiveCategory(cat.name)} 
+                  <div key={cat.id} onClick={() => setActiveCategory(cat.id)} 
                     className={`relative rounded-[2.5rem] h-48 overflow-hidden cursor-pointer transition-all duration-500 group shadow-lg
-                    ${activeCategory === cat.name ? 'ring-2 ring-amber-500 scale-[1.03]' : 'hover:scale-[1.02]'}`}>
-                    <img src={catImages[cat.name as keyof typeof catImages]} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                    ${activeCategory === cat.id ? 'ring-2 ring-amber-500 scale-[1.03]' : 'hover:scale-[1.02]'}`}>
+                    <img src={catImages[cat.id as keyof typeof catImages]} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
                     <div className={`absolute inset-0 bg-gradient-to-t ${cat.color} to-transparent opacity-90`} />
-                    <div className="absolute bottom-6 left-6"><p className="text-sm font-black uppercase italic tracking-tighter leading-none">{cat.name}</p></div>
+                    <div className="absolute bottom-6 left-6 pr-6"><p className="text-sm font-black uppercase italic tracking-tighter leading-none">{t[lang].catNames[cat.id]}</p></div>
                   </div>
                 ))}
               </div>
@@ -146,13 +156,12 @@ const App: React.FC = () => {
                 {filteredSongs.map((song: any) => (
                   <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 transition-all group">
                     <div className="flex items-center space-x-5 cursor-pointer flex-1" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
-                      <img src={song.cover} className="w-12 h-12 rounded-xl object-cover shadow-lg" alt="" />
+                      <img src={song.cover} className="w-12 h-12 rounded-xl object-cover" alt="" />
                       <div><p className="font-bold text-sm tracking-tight">{song.title}</p><p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">{song.artist}</p></div>
                     </div>
                     <div className="flex items-center space-x-6 pr-4">
                          <span className={`text-[11px] font-black ${likedSongs.includes(song.id) ? 'text-red-500' : 'text-amber-500'}`}>{song.likes || 0}</span>
-                         <button onClick={() => handleLike(song.id)} className={`${likedSongs.includes(song.id) ? 'text-red-500 scale-110' : 'text-neutral-500 hover:text-red-400'} text-xl transition-all`}>♥</button>
-                      <a href={song.url} download className="text-neutral-400 hover:text-white text-xl">⇩</a>
+                         <button onClick={() => { if(!likedSongs.includes(song.id)) { handleLike(song.id) } }} className={`${likedSongs.includes(song.id) ? 'text-red-500 scale-110' : 'text-neutral-500 hover:text-red-400'} text-xl transition-all`}>♥</button>
                     </div>
                   </div>
                 ))}
@@ -160,14 +169,13 @@ const App: React.FC = () => {
             </div>
           )}
 
-          {/* İLETİŞİM PANELİ - SİYAHTAN KURTARILDI, SARI KUTU GERİ GELDİ */}
           {activeTab === 'contact' && (
              <div className="max-w-5xl mx-auto py-10 space-y-8 animate-in slide-in-from-bottom-6 duration-700">
-                <div className="bg-amber-500 rounded-[3.5rem] p-16 text-center text-black shadow-2xl relative overflow-hidden">
+                <div className="bg-amber-500 rounded-[3.5rem] p-16 text-center text-black shadow-2xl">
                    <h2 className="text-5xl font-black mb-4 italic uppercase leading-none tracking-tighter">{t[lang].contactTitle}</h2>
                    <p className="font-black text-xl italic mb-6 opacity-90">{t[lang].contactSub}</p>
                    <p className="text-xs font-bold max-w-2xl mx-auto mb-10 leading-relaxed opacity-75">{t[lang].contactDesc}</p>
-                   <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" className="inline-block bg-black text-white px-14 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 transition-all shadow-xl">
+                   <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" className="inline-block bg-black text-white px-14 py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl">
                     {t[lang].waBtn}
                    </a>
                 </div>
@@ -189,36 +197,34 @@ const App: React.FC = () => {
              </div>
           )}
 
-          {/* PANEL - TÜM AYARLAR VE YÖNETİM GERİ GELDİ */}
           {activeTab === 'admin' && (
             <div className="max-w-4xl mx-auto space-y-8 animate-in zoom-in-95 duration-500">
-               {/* BANNER VE LOGO AYARLARI */}
+               {/* BANNER DİL AYARLARI */}
                <div className="bg-neutral-900/50 p-8 rounded-[2.5rem] border border-amber-500/20 shadow-xl">
-                  <h3 className="text-amber-500 font-black mb-6 uppercase text-[10px] tracking-widest italic border-b border-white/5 pb-2">Genel Görünüm Ayarları</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Logo URL</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-amber-500 transition-all" value={logoUrl} onChange={(e)=>setLogoUrl(e.target.value)} /></div>
-                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Banner URL</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-amber-500 transition-all" value={bannerUrl} onChange={(e)=>setBannerUrl(e.target.value)} /></div>
-                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Banner Metni</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-amber-500 transition-all" value={bannerText} onChange={(e)=>setBannerText(e.target.value)} /></div>
+                  <h3 className="text-amber-500 font-black mb-6 uppercase text-[10px] tracking-widest italic border-b border-white/5 pb-2">Banner Metin Yönetimi (TR/KU)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Banner TR</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerTR} onChange={(e)=>setBannerTR(e.target.value)} /></div>
+                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Banner KU</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerKU} onChange={(e)=>setBannerKU(e.target.value)} /></div>
                   </div>
                </div>
 
                {/* KATEGORİ RESİM AYARLARI */}
-               <div className="bg-neutral-900/50 p-8 rounded-[2.5rem] border border-purple-500/20 shadow-xl">
-                  <h3 className="text-purple-500 font-black mb-6 uppercase text-[10px] tracking-widest italic border-b border-white/5 pb-2">Kategori Görsel Yönetimi</h3>
+               <div className="bg-neutral-900/50 p-8 rounded-[2.5rem] border border-white/10 shadow-xl">
+                  <h3 className="text-white font-black mb-6 uppercase text-[10px] tracking-widest italic border-b border-white/5 pb-2">Kategori Görsel Yönetimi</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      {categories.map(cat => (
-                       <div key={cat.name} className="space-y-1">
-                         <label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">{cat.name}</label>
-                         <input type="text" className="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-purple-500" value={catImages[cat.name as keyof typeof catImages]} onChange={(e) => setCatImages({...catImages, [cat.name]: e.target.value})} />
+                       <div key={cat.id} className="space-y-1">
+                         <label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">{cat.id}</label>
+                         <input type="text" className="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-xs text-white" value={catImages[cat.id as keyof typeof catImages]} onChange={(e) => setCatImages({...catImages, [cat.id]: e.target.value})} />
                        </div>
                      ))}
                   </div>
                </div>
 
-               {/* YENİ ŞARKI EKLE */}
+               {/* ŞARKI YÖNETİMİ */}
                <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-white/10 shadow-2xl">
                   <h2 className="text-xl font-black text-amber-500 mb-8 uppercase italic border-b border-white/5 pb-4">YENİ ŞARKI EKLE</h2>
-                  <form onSubmit={(e) => { e.preventDefault(); setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]); alert("Şarkı eklendi!"); }} className="space-y-4">
+                  <form onSubmit={(e) => { e.preventDefault(); setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]); alert("Yayına alındı!"); }} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <input type="text" placeholder="Şarkı Adı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} required />
                       <input type="text" placeholder="Sanatçı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.artist} onChange={e => setNewSong({...newSong, artist: e.target.value})} required />
@@ -226,25 +232,24 @@ const App: React.FC = () => {
                     <input type="text" placeholder="Kapak URL" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.cover} onChange={e => setNewSong({...newSong, cover: e.target.value})} required />
                     <input type="text" placeholder="Müzik URL" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} required />
                     <select className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm text-white" value={newSong.category} onChange={e => setNewSong({...newSong, category: e.target.value})}>
-                      {categories.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+                      {categories.map((c) => <option key={c.id} value={c.id}>{c.id}</option>)}
                     </select>
-                    <button type="submit" className="w-full bg-amber-500 text-black font-black py-5 rounded-2xl shadow-xl uppercase tracking-widest hover:bg-amber-400 transition-all">SİSTEME KAYDET</button>
+                    <button type="submit" className="w-full bg-amber-500 text-black font-black py-5 rounded-2xl shadow-xl uppercase tracking-widest">KAYDET</button>
                   </form>
                </div>
 
-               {/* ŞARKI YÖNETİM LİSTESİ */}
                <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-red-500/10 shadow-xl">
-                  <h2 className="text-lg font-black text-red-500 mb-6 uppercase italic">ŞARKILARI YÖNET (DÜZENLE / SİL)</h2>
+                  <h2 className="text-lg font-black text-red-500 mb-6 uppercase italic">ŞARKILARI YÖNET</h2>
                   <div className="space-y-3">
                     {songs.map((song: any) => (
                       <div key={song.id} className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
                         <div className="flex items-center space-x-4">
                           <img src={song.cover} className="w-10 h-10 rounded-lg object-cover" alt="" />
-                          <div><p className="font-bold text-sm">{song.title}</p><p className="text-[10px] text-neutral-600 font-black uppercase">{song.artist}</p></div>
+                          <div><p className="font-bold text-sm">{song.title}</p><p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest">{song.artist}</p></div>
                         </div>
                         <div className="flex space-x-2">
-                           <button onClick={() => editSong(song.id)} className="bg-amber-500/10 text-amber-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-amber-500 hover:text-black transition-all uppercase italic">Düzenle</button>
-                           <button onClick={() => { if(window.confirm("Silinsin mi?")) setSongs(songs.filter((s:any) => s.id !== song.id)) }} className="bg-red-500/10 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-red-500 hover:text-white transition-all uppercase italic">Sil</button>
+                           <button onClick={() => editSong(song.id)} className="bg-amber-500/10 text-amber-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-amber-500 hover:text-black transition-all">DÜZENLE</button>
+                           <button onClick={() => { if(window.confirm("Silinsin mi?")) setSongs(songs.filter((s:any) => s.id !== song.id)) }} className="bg-red-500/10 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-red-500 hover:text-white transition-all">SİL</button>
                         </div>
                       </div>
                     ))}
