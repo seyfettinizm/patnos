@@ -38,8 +38,20 @@ const App: React.FC = () => {
   const [newSong, setNewSong] = useState({ title: '', artist: '', cover: '', url: '', category: 'Patnos Türküleri' });
 
   const t: any = {
-    TR: { search: "Ara...", explore: "KEŞFET", collections: "ÖZEL KOLEKSİYONLAR", banner: bannerTR, contactTitle: "MÜZİĞİNİ PAYLAŞ", contactDesc: "Elinizdeki yöresel kayıtları bize ulaştırın.", waBtn: "WHATSAPP", topTracks: "EN ÇOK BEĞENİLENLER", catNames: { "Patnos Türküleri": "Patnos Türküleri", "Patnoslu Sanatçılar": "Patnoslu Sanatçılar", "Dengbêjler": "Dengbêjler", "Sizden Gelenler": "Sizden Gelenler" } },
-    KU: { search: "Bigere...", explore: "KEŞIF BIKE", collections: "KOLEKSIYONÊN TAYBET", banner: bannerKU, contactTitle: "MUZÎKA XWE PARVE BIKE", contactDesc: "Qeydên xwe ji me re bişînin.", waBtn: "WHATSAPP", topTracks: "YÊN HERÎ ZÊDE HATINE BEĞENÎ KIRIN", catNames: { "Patnos Türküleri": "Stranên Panosê", "Patnoslu Sanatçılar": "Hunermendên Panosî", "Dengbêjler": "Dengbêj", "Sizden Gelenler": "Ji We Hatiye" } }
+    TR: { 
+      search: "Ara...", collections: "ÖZEL KOLEKSİYONLAR", banner: bannerTR, topTracks: "EN ÇOK BEĞENİLENLER",
+      contactTitle: "MÜZİĞİNİ PAYLAŞ", contactSub: '"Tozlu raflarda unutulmuş bir kayıt mı var?"',
+      contactDesc: "Kültürel mirasımızı birlikte ilmek ilmek işleyelim. Elinizdeki yöresel kayıtları bize ulaştırın.",
+      waBtn: "WHATSAPP", waHatti: "WHATSAPP HATTI", waNum: "0505 225 06 55", adrTitle: "ADRES", adrText: "Yeşilbağlar Mah. 637/33 Sok. No: 25 Buca/İzmir", mailTitle: "E-POSTA",
+      catNames: { "Patnos Türküleri": "Patnos Türküleri", "Patnoslu Sanatçılar": "Patnoslu Sanatçılar", "Dengbêjler": "Dengbêjler", "Sizden Gelenler": "Sizden Gelenler" } 
+    },
+    KU: { 
+      search: "Bigere...", collections: "KOLEKSIYONÊN TAYBET", banner: bannerKU, topTracks: "YÊN HERÎ ZÊDE HATINE BEĞENÎ KIRIN",
+      contactTitle: "MUZÎKA XWE PARVE BIKE", contactSub: '"Ma qeydeke ji bîr kiriye heye?"',
+      contactDesc: "Werin em mîrateya xwe ya çandî bi hev re biparêzin. Qeydên xwe ji me re bişînin.",
+      waBtn: "WHATSAPP", waHatti: "XETA WHATSAPPÊ", waNum: "0505 225 06 55", adrTitle: "ADRES", adrText: "Taxa Yeşilbağlar. 637/33 Sok. No: 25 Buca/Îzmîr", mailTitle: "E-POSTA",
+      catNames: { "Patnos Türküleri": "Stranên Panosê", "Patnoslu Sanatçılar": "Hunermendên Panosî", "Dengbêjler": "Dengbêj", "Sizden Gelenler": "Ji We Hatiye" } 
+    }
   };
 
   const categories = [
@@ -67,13 +79,9 @@ const App: React.FC = () => {
     });
   };
 
-  // OTOMATİK GEÇİŞ SİSTEMİ
   const playNextSong = () => {
-    // Şarkıları beğeni ve alfabe sırasına göre diziyoruz (Sistemdeki sıralama neyse o)
     const sortedList = sortSongs(songs);
     const currentIndex = sortedList.findIndex((s: any) => s.id === currentSong?.id);
-    
-    // Bir sonraki şarkıyı bul (Listenin sonuna gelince başa dön)
     const nextIndex = (currentIndex + 1) % sortedList.length;
     setCurrentSong(sortedList[nextIndex]);
     setIsPlaying(true);
@@ -90,13 +98,13 @@ const App: React.FC = () => {
     : sortSongs(songs.filter((s: any) => s.category === activeCategory));
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-black text-white overflow-hidden font-sans">
+    <div className="flex flex-col md:flex-row h-screen bg-[#050505] text-white overflow-hidden">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} setIsAdmin={setIsAdmin} lang={lang} logoUrl={logoUrl} setLang={setLang} />
 
-      <main className="flex-1 flex flex-col relative overflow-hidden bg-gradient-to-b from-neutral-900/20 to-black">
-        <header className="h-16 flex items-center justify-between px-8 z-30 shrink-0 border-b border-white/5 backdrop-blur-md bg-black/20">
+      <main className="flex-1 flex flex-col relative overflow-hidden bg-gradient-to-b from-neutral-900/10 to-black">
+        <header className="h-16 flex items-center justify-between px-8 border-b border-white/5 bg-black/20">
           <input type="text" placeholder={t[lang].search} className="bg-white/5 border border-white/10 rounded-full px-6 py-2 text-xs w-full max-w-xl outline-none" />
-          <div className="flex bg-black/40 rounded-full p-1 border border-white/10">
+          <div className="flex bg-black/40 rounded-full p-1 border border-white/10 ml-4">
             <button onClick={() => setLang('TR')} className={`px-4 py-1 rounded-full text-[10px] font-black ${lang === 'TR' ? 'bg-amber-500 text-black' : 'text-white'}`}>TR</button>
             <button onClick={() => setLang('KU')} className={`px-4 py-1 rounded-full text-[10px] font-black ${lang === 'KU' ? 'bg-amber-500 text-black' : 'text-white'}`}>KU</button>
           </div>
@@ -107,38 +115,32 @@ const App: React.FC = () => {
             <div className="animate-in fade-in duration-700">
                <div className="mb-8 rounded-[3.5rem] relative overflow-hidden h-[300px] flex items-center shadow-2xl">
                 <img src={bannerUrl} className="absolute inset-0 w-full h-full object-cover opacity-50" alt="" />
-                <div className="relative z-10 p-16"><h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter leading-none text-amber-500">{t[lang].banner}</h2></div>
+                <div className="relative z-10 p-16"><h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-amber-500">{t[lang].banner}</h2></div>
               </div>
-              
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 {categories.map((cat) => (
-                  <div key={cat.id} onClick={() => setActiveCategory(activeCategory === cat.id ? 'Tümü' : cat.id)} 
-                    className={`relative rounded-[2.5rem] h-48 overflow-hidden cursor-pointer transition-all duration-500 group shadow-lg
-                    ${activeCategory === cat.id ? 'ring-2 ring-amber-500 scale-[1.03]' : 'hover:scale-[1.02]'}`}>
-                    <img src={catImages[cat.id as keyof typeof catImages]} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                  <div key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`relative rounded-[2.5rem] h-48 overflow-hidden cursor-pointer transition-all ${activeCategory === cat.id ? 'ring-2 ring-amber-500 scale-[1.03]' : ''}`}>
+                    <img src={catImages[cat.id as keyof typeof catImages]} className="absolute inset-0 w-full h-full object-cover" alt="" />
                     <div className={`absolute inset-0 bg-gradient-to-t ${cat.color} to-transparent opacity-90`} />
                     <div className="absolute bottom-6 left-6 pr-6"><p className="text-sm font-black uppercase italic tracking-tighter">{t[lang].catNames[cat.id]}</p></div>
                   </div>
                 ))}
               </div>
-
               <h3 className="text-[10px] font-black mb-6 flex items-center tracking-widest text-neutral-500 uppercase">
-                <span className="w-6 h-[2px] bg-amber-500 mr-3"></span> 
-                {activeCategory === 'Tümü' || activeCategory === 'Hemû' ? t[lang].topTracks : t[lang].catNames[activeCategory]}
+                <span className="w-6 h-[2px] bg-amber-500 mr-3"></span> {activeCategory === 'Tümü' || activeCategory === 'Hemû' ? t[lang].topTracks : t[lang].catNames[activeCategory]}
               </h3>
-
               <div className="space-y-2">
                 {displaySongs.map((song: any) => (
-                  <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 transition-all group">
-                    <div className="flex items-center space-x-5 cursor-pointer flex-1" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
+                  <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer group" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
+                    <div className="flex items-center space-x-5 flex-1">
                       <img src={song.cover} className="w-12 h-12 rounded-xl object-cover" alt="" />
                       <div><p className="font-bold text-sm">{song.title}</p><p className="text-[10px] text-neutral-500 font-black uppercase">{song.artist}</p></div>
                     </div>
                     <div className="flex items-center space-x-6 pr-4">
                          <div className="hidden md:block text-[10px] font-mono text-neutral-600"><DurationDisplay url={song.url} /></div>
-                         <div className="flex items-center space-x-2">
+                         <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                             <span className={`text-[11px] font-black ${likedSongs.includes(song.id) ? 'text-red-500' : 'text-amber-500'}`}>{song.likes || 0}</span>
-                            <button onClick={() => handleLike(song.id)} className={`${likedSongs.includes(song.id) ? 'text-red-500 cursor-default' : 'text-neutral-500 hover:text-red-400'} text-xl transition-all`}>♥</button>
+                            <button onClick={() => handleLike(song.id)} className={`${likedSongs.includes(song.id) ? 'text-red-500' : 'text-neutral-500 hover:text-red-400'} text-xl transition-all`}>♥</button>
                          </div>
                          <button onClick={(e) => { e.stopPropagation(); window.open(song.url, '_blank'); }} className="text-neutral-400 hover:text-white text-xl">⇩</button>
                     </div>
@@ -148,42 +150,85 @@ const App: React.FC = () => {
             </div>
           )}
 
-          {/* DİĞER TABLAR (ADMIN, CONTACT) BURAYA GELEBİLİR - SİZİN MEVCUT KODUNUZU KORUDUM */}
-          {activeTab === 'admin' && (
-             <div className="max-w-4xl mx-auto space-y-8 animate-in zoom-in-95">
-                <div className="bg-neutral-900/50 p-8 rounded-[2.5rem] border border-amber-500/20 shadow-xl">
-                   <h3 className="text-amber-500 font-black mb-6 uppercase text-[10px] tracking-widest italic border-b border-white/5 pb-2">Görsel & Dil Yönetimi</h3>
-                   <div className="grid grid-cols-2 gap-4">
-                     <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerTR} onChange={(e)=>setBannerTR(e.target.value)} placeholder="Banner Türkçe" />
-                     <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerKU} onChange={(e)=>setBannerKU(e.target.value)} placeholder="Banner Kürtçe" />
+          {activeTab === 'contact' && (
+             <div className="max-w-5xl mx-auto py-10 space-y-8 animate-in slide-in-from-bottom-6 duration-700">
+                <div className="bg-amber-500 rounded-[3.5rem] p-16 text-center text-black shadow-2xl">
+                   <h2 className="text-5xl font-black mb-4 italic uppercase tracking-tighter">{t[lang].contactTitle}</h2>
+                   <p className="font-black text-xl italic mb-6 opacity-90">{t[lang].contactSub}</p>
+                   <p className="text-xs font-bold max-w-2xl mx-auto mb-10 leading-relaxed opacity-75">{t[lang].contactDesc}</p>
+                   <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" className="inline-block bg-black text-white px-14 py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl">
+                    {t[lang].waBtn}
+                   </a>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   <div className="bg-neutral-900/80 p-10 rounded-[2.5rem] text-center border border-white/5">
+                      <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest">{t[lang].adrTitle}</h3>
+                      <p className="text-[11px] italic text-neutral-300 font-bold leading-relaxed">{t[lang].adrText}</p>
+                   </div>
+                   <div className="bg-neutral-900/80 p-10 rounded-[2.5rem] text-center border border-white/5">
+                      <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest">{t[lang].waHatti}</h3>
+                      <p className="text-lg italic text-neutral-100 font-black">{t[lang].waNum}</p>
+                   </div>
+                   <div className="bg-neutral-900/80 p-10 rounded-[2.5rem] text-center border border-white/5">
+                      <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest">{t[lang].mailTitle}</h3>
+                      <p className="text-sm italic text-neutral-100 font-black">patnosumuz@gmail.com</p>
                    </div>
                 </div>
-                {/* Şarkı ekleme formu vb. sizin mevcut admin kodunuzu buraya ekleyebilirsiniz */}
-                <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-white/10 shadow-2xl">
+             </div>
+          )}
+
+          {activeTab === 'admin' && (
+            <div className="max-w-4xl mx-auto space-y-8 animate-in zoom-in-95 duration-500">
+               <div className="bg-neutral-900/50 p-8 rounded-[2.5rem] border border-amber-500/20 shadow-xl">
+                  <h3 className="text-amber-500 font-black mb-6 uppercase text-[10px] tracking-widest italic border-b border-white/5 pb-2">Görsel & Dil Yönetimi</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Logo URL</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={logoUrl} onChange={(e)=>setLogoUrl(e.target.value)} /></div>
+                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Banner TR</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerTR} onChange={(e)=>setBannerTR(e.target.value)} /></div>
+                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Banner KU</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerKU} onChange={(e)=>setBannerKU(e.target.value)} /></div>
+                  </div>
+                  <div className="mt-4"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Banner Arkaplan URL</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerUrl} onChange={(e)=>setBannerUrl(e.target.value)} /></div>
+               </div>
+
+               <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-white/10 shadow-2xl">
                   <h2 className="text-xl font-black text-amber-500 mb-8 uppercase italic border-b border-white/5 pb-4">YENİ ŞARKI EKLE</h2>
                   <form onSubmit={(e) => { e.preventDefault(); setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]); alert("Kaydedildi!"); }} className="space-y-4">
-                    <input type="text" placeholder="Şarkı Adı" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} />
-                    <input type="text" placeholder="Sanatçı" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.artist} onChange={e => setNewSong({...newSong, artist: e.target.value})} />
-                    <input type="text" placeholder="Müzik URL" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} />
-                    <input type="text" placeholder="Kapak URL" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.cover} onChange={e => setNewSong({...newSong, cover: e.target.value})} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <input type="text" placeholder="Şarkı Adı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} required />
+                      <input type="text" placeholder="Sanatçı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.artist} onChange={e => setNewSong({...newSong, artist: e.target.value})} required />
+                    </div>
+                    <input type="text" placeholder="Müzik URL" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} required />
+                    <input type="text" placeholder="Kapak URL" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.cover} onChange={e => setNewSong({...newSong, cover: e.target.value})} required />
                     <select className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm text-white" value={newSong.category} onChange={e => setNewSong({...newSong, category: e.target.value})}>
                       {categories.map((c) => <option key={c.id} value={c.id}>{c.id}</option>)}
                     </select>
-                    <button type="submit" className="w-full bg-amber-500 text-black font-black py-5 rounded-2xl">KAYDET</button>
+                    <button type="submit" className="w-full bg-amber-500 text-black font-black py-5 rounded-2xl shadow-xl uppercase tracking-widest">KAYDET</button>
                   </form>
-                </div>
-             </div>
+               </div>
+
+               <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-red-500/10 shadow-xl">
+                  <h2 className="text-lg font-black text-red-500 mb-6 uppercase italic">ŞARKILARI YÖNET (DÜZENLE / SİL)</h2>
+                  <div className="space-y-3">
+                    {songs.map((song: any) => (
+                      <div key={song.id} className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
+                        <div className="flex items-center space-x-4">
+                          <img src={song.cover} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                          <div><p className="font-bold text-sm">{song.title}</p><p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest">{song.artist}</p></div>
+                        </div>
+                        <div className="flex space-x-2">
+                           <button onClick={() => { const n = prompt("Yeni Şarkı Adı:", song.title); if(n) setSongs(songs.map(s => s.id === song.id ? {...s, title: n} : s)) }} className="bg-amber-500/10 text-amber-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-amber-500 hover:text-black transition-all">DÜZENLE</button>
+                           <button onClick={() => { if(window.confirm("Silinsin mi?")) setSongs(songs.filter((s:any) => s.id !== song.id)) }} className="bg-red-500/10 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-red-500 hover:text-white transition-all">SİL</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+               </div>
+            </div>
           )}
         </div>
         
         {currentSong && (
           <div className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-2xl border-t border-white/5 h-28 px-4 md:px-10 z-50 shadow-2xl">
-            <Player 
-              song={currentSong} 
-              isPlaying={isPlaying} 
-              setIsPlaying={setIsPlaying} 
-              onEnded={playNextSong} 
-            />
+            <Player song={currentSong} isPlaying={isPlaying} setIsPlaying={setIsPlaying} onEnded={playNextSong} />
           </div>
         )}
       </main>
@@ -191,7 +236,6 @@ const App: React.FC = () => {
   );
 };
 
-// SÜRE ALGILAYICI BİLEŞEN
 const DurationDisplay: React.FC<{ url: string }> = ({ url }) => {
   const [duration, setDuration] = useState("0:00");
   useEffect(() => {
