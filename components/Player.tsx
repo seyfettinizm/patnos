@@ -1,88 +1,72 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 
-const Player: React.FC<any> = ({ song, isPlaying, setIsPlaying }) => {
+interface PlayerProps {
+  song: any;
+  isPlaying: boolean;
+  setIsPlaying: (playing: boolean) => void;
+  onEnded: () => void; // Otomatik geçiş sinyali
+}
+
+const Player: React.FC<PlayerProps> = ({ song, isPlaying, setIsPlaying, onEnded }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.8); // Standart %80 ses ile başlar
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (isPlaying) audioRef.current?.play();
-    else audioRef.current?.pause();
+    if (isPlaying) {
+      audioRef.current?.play().catch(() => setIsPlaying(false));
+    } else {
+      audioRef.current?.pause();
+    }
   }, [isPlaying, song]);
 
-  // Standart ses kontrolü (Maksimum %100)
-  useEffect(() => {
+  const handleTimeUpdate = () => {
     if (audioRef.current) {
-      audioRef.current.volume = volume;
+      const val = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      setProgress(val || 0);
     }
-  }, [volume]);
-
-  const onTimeUpdate = () => {
-    setCurrentTime(audioRef.current?.currentTime || 0);
-    setDuration(audioRef.current?.duration || 0);
-  };
-
-  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (audioRef.current) {
-      const newTime = Number(e.target.value);
-      audioRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    }
-  };
-
-  const formatTime = (time: number) => {
-    const min = Math.floor(time / 60);
-    const sec = Math.floor(time % 60);
-    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
   };
 
   return (
     <div className="flex items-center justify-between h-full max-w-7xl mx-auto">
-      <audio ref={audioRef} src={song.url} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onTimeUpdate} />
+      {/* Şarkı Bilgisi */}
+      <div className="flex items-center space-x-4 w-1/3">
+        <img src={song.cover} className={`w-16 h-16 rounded-full object-cover border-2 border-amber-500/50 ${isPlaying ? 'animate-spin-slow' : ''}`} alt="" />
+        <div className="overflow-hidden">
+          <p className="font-black text-sm truncate uppercase italic tracking-tighter">{song.title}</p>
+          <p className="text-[10px] text-neutral-500 font-bold truncate uppercase">{song.artist}</p>
+        </div>
+      </div>
+
+      {/* Kontroller */}
+      <div className="flex flex-col items-center w-1/3 space-y-2">
+        <div className="flex items-center space-x-8">
+          <button onClick={onEnded} className="text-neutral-400 hover:text-white transition-colors">⏮</button>
+          <button 
+            onClick={() => setIsPlaying(!isPlaying)}
+            className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center text-xl hover:scale-110 transition-transform"
+          >
+            {isPlaying ? 'Ⅱ' : '▶'}
+          </button>
+          <button onClick={onEnded} className="text-neutral-400 hover:text-white transition-colors">⏭</button>
+        </div>
+        
+        {/* Progress Bar */}
+        <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+          <div className="bg-amber-500 h-full transition-all duration-300" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
+      {/* Ses Dosyası Elementi */}
+      <audio 
+        ref={audioRef} 
+        src={song.url} 
+        onTimeUpdate={handleTimeUpdate}
+        onEnded={onEnded} // ŞARKI BİTTİĞİNDE TETİKLENİR
+        autoPlay={isPlaying}
+      />
       
-      {/* SOL: ŞARKI BİLGİSİ */}
-      <div className="flex items-center space-x-4 w-1/4">
-        <img src={song.cover} className="w-12 h-12 rounded-lg object-cover" alt="" />
-        <div className="hidden md:block overflow-hidden">
-          <p className="text-xs font-black text-white truncate">{song.title}</p>
-          <p className="text-[9px] text-amber-500 font-black uppercase truncate">{song.artist}</p>
-        </div>
-      </div>
-
-      {/* ORTA: OYNATMA VE SAF İLERLEME ÇUBUĞU */}
-      <div className="flex flex-col items-center w-1/2 px-4">
-        <button onClick={() => setIsPlaying(!isPlaying)} className="text-white text-2xl mb-2 hover:scale-110 transition-all">
-          {isPlaying ? "Ⅱ" : "▶"}
-        </button>
-        <div className="flex items-center space-x-3 w-full">
-          <span className="text-[9px] text-neutral-600 font-bold w-8 text-right">{formatTime(currentTime)}</span>
-          <div className="relative flex-1 h-1 flex items-center">
-            <input 
-              type="range" 
-              min="0" 
-              max={duration || 0} 
-              value={currentTime} 
-              onChange={handleProgressChange}
-              className="absolute w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-amber-500" 
-            />
-          </div>
-          <span className="text-[9px] text-neutral-600 font-bold w-8 text-left">{formatTime(duration)}</span>
-        </div>
-      </div>
-
-      {/* SAĞ: STANDART SES AYARI */}
-      <div className="w-1/4 flex justify-end items-center space-x-3">
-        <span className="text-neutral-600 text-[10px] font-black uppercase">Vol</span>
-        <input 
-          type="range" 
-          min="0" 
-          max="1" 
-          step="0.01" 
-          value={volume} 
-          onChange={(e) => setVolume(Number(e.target.value))}
-          className="w-24 accent-amber-500 h-1 bg-white/10 rounded-full cursor-pointer appearance-none" 
-        />
+      <div className="w-1/3 flex justify-end">
+        <div className="text-[10px] font-black text-amber-500/50 italic tracking-widest">PATNOS MUZIK PRO</div>
       </div>
     </div>
   );
