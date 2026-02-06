@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initialSongs } from './constants';
 import Sidebar from './components/Sidebar';
 import Player from './components/Player';
@@ -66,14 +66,7 @@ const App: React.FC = () => {
     setLikedSongs([...likedSongs, id]);
   };
 
-  const playNextSong = () => {
-    const currentIndex = songs.findIndex((s: any) => s.id === currentSong?.id);
-    const nextIndex = (currentIndex + 1) % songs.length;
-    setCurrentSong(songs[nextIndex]);
-    setIsPlaying(true);
-  };
-
-  // SIRALAMA ALGORİTMASI: Beğeni Sayısı (Büyükten Küçüğe) + Alfabetik (A-Z)
+  // SIRALAMA ALGORİTMASI: Beğeni Sayısı + Alfabetik
   const sortSongs = (list: any[]) => {
     return [...list].sort((a, b) => {
       if ((b.likes || 0) !== (a.likes || 0)) return (b.likes || 0) - (a.likes || 0);
@@ -81,7 +74,15 @@ const App: React.FC = () => {
     });
   };
 
-  // ANA SAYFA LİSTESİ: Kategori seçiliyse hepsi, değilse en iyi 6
+  // OTO GEÇİŞ FONKSİYONU
+  const playNextSong = () => {
+    const sortedList = sortSongs(songs);
+    const currentIndex = sortedList.findIndex((s: any) => s.id === currentSong?.id);
+    const nextIndex = (currentIndex + 1) % sortedList.length;
+    setCurrentSong(sortedList[nextIndex]);
+    setIsPlaying(true);
+  };
+
   const displaySongs = activeCategory === 'Tümü' || activeCategory === 'Hemû'
     ? sortSongs(songs).slice(0, 6)
     : sortSongs(songs.filter((s: any) => s.category === activeCategory));
@@ -128,7 +129,7 @@ const App: React.FC = () => {
                 {displaySongs.map((song: any) => (
                   <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 transition-all group">
                     <div className="flex items-center space-x-5 cursor-pointer flex-1" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
-                      <img src={song.cover} className="w-12 h-12 rounded-xl object-cover" alt="" />
+                      <img src={song.cover} className="w-12 h-12 rounded-xl object-cover shadow-lg" alt="" />
                       <div>
                         <p className="font-bold text-sm tracking-tight">{song.title}</p>
                         <p className="text-[10px] text-neutral-500 font-black uppercase">{song.artist}</p>
@@ -152,9 +153,9 @@ const App: React.FC = () => {
 
           {activeTab === 'contact' && (
              <div className="max-w-5xl mx-auto py-10 space-y-8 animate-in slide-in-from-bottom-6">
-                <div className="bg-amber-500 rounded-[3.5rem] p-16 text-center text-black shadow-2xl">
-                   <h2 className="text-5xl font-black mb-4 italic uppercase tracking-tighter">{t[lang].contactTitle}</h2>
-                   <p className="text-xs font-bold max-w-2xl mx-auto mb-10 opacity-75">{t[lang].contactDesc}</p>
+                <div className="bg-amber-500 rounded-[3.5rem] p-16 text-center text-black shadow-2xl relative overflow-hidden">
+                   <h2 className="text-5xl font-black mb-4 italic uppercase tracking-tighter leading-none">{t[lang].contactTitle}</h2>
+                   <p className="text-xs font-bold max-w-2xl mx-auto mb-10 leading-relaxed opacity-75">{t[lang].contactDesc}</p>
                    <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" className="inline-block bg-black text-white px-14 py-5 rounded-2xl font-black uppercase text-sm shadow-xl">
                     {t[lang].waBtn}
                    </a>
@@ -172,12 +173,12 @@ const App: React.FC = () => {
                <div className="bg-neutral-900/50 p-8 rounded-[2.5rem] border border-amber-500/20 shadow-xl">
                   <h3 className="text-amber-500 font-black mb-6 uppercase text-[10px] tracking-widest italic border-b border-white/5 pb-2">Banner Metin Yönetimi</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs text-white outline-none" value={bannerTR} onChange={(e)=>setBannerTR(e.target.value)} placeholder="Türkçe Banner" />
-                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs text-white outline-none" value={bannerKU} onChange={(e)=>setBannerKU(e.target.value)} placeholder="Kürtçe Banner" />
+                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerTR} onChange={(e)=>setBannerTR(e.target.value)} placeholder="Türkçe Banner" />
+                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerKU} onChange={(e)=>setBannerKU(e.target.value)} placeholder="Kürtçe Banner" />
                   </div>
                </div>
 
-               <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-white/10">
+               <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-white/10 shadow-2xl">
                   <h2 className="text-xl font-black text-amber-500 mb-8 uppercase italic border-b border-white/5 pb-4">YENİ ŞARKI EKLE</h2>
                   <form onSubmit={(e) => { e.preventDefault(); setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]); alert("Şarkı eklendi!"); }} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -193,7 +194,7 @@ const App: React.FC = () => {
                   </form>
                </div>
 
-               <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-red-500/10">
+               <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-red-500/10 shadow-xl">
                   <h2 className="text-lg font-black text-red-500 mb-6 uppercase italic">ŞARKILARI YÖNET</h2>
                   <div className="space-y-3">
                     {songs.map((song: any) => (
@@ -220,7 +221,7 @@ const App: React.FC = () => {
               song={currentSong} 
               isPlaying={isPlaying} 
               setIsPlaying={setIsPlaying} 
-              onNext={playNextSong} // Otomatik geçiş için prop
+              onEnded={playNextSong} // BU SATIR ÖNEMLİ: Şarkı bitince otomatik tetiklenir
             />
           </div>
         )}
@@ -229,7 +230,6 @@ const App: React.FC = () => {
   );
 };
 
-// SÜRE ALGILAYICI BİLEŞEN
 const DurationDisplay: React.FC<{ url: string }> = ({ url }) => {
   const [duration, setDuration] = useState("0:00");
   useEffect(() => {
