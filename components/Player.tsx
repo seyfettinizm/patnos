@@ -33,35 +33,40 @@ const Player: React.FC<any> = ({ song, isPlaying, setIsPlaying }) => {
     <div className="flex items-center justify-between h-full max-w-7xl mx-auto">
       <audio ref={audioRef} src={song.url} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onTimeUpdate} />
       
-      <div className="flex items-center space-x-4 w-1/3">
-        <img src={song.cover} className="w-14 h-14 rounded-xl shadow-2xl object-cover animate-pulse" alt="" />
-        <div className="hidden md:block">
-          <p className="text-sm font-black text-white">{song.title}</p>
-          <p className="text-[10px] text-amber-500 font-black uppercase tracking-widest">{song.artist}</p>
+      {/* SOL: ŞARKI BİLGİSİ */}
+      <div className="flex items-center space-x-4 w-1/4">
+        <img src={song.cover} className="w-12 h-12 rounded-lg object-cover" alt="" />
+        <div className="hidden md:block overflow-hidden">
+          <p className="text-xs font-black text-white truncate">{song.title}</p>
+          <p className="text-[9px] text-amber-500 font-black uppercase truncate">{song.artist}</p>
         </div>
       </div>
 
-      <div className="flex flex-col items-center w-1/3">
-        <button onClick={() => setIsPlaying(!isPlaying)} className="bg-amber-500 text-black w-12 h-12 rounded-full flex items-center justify-center text-2xl hover:scale-110 transition-all mb-2">
+      {/* ORTA: KONTROL VE SAF ÇUBUK */}
+      <div className="flex flex-col items-center w-1/2 px-4">
+        <button onClick={() => setIsPlaying(!isPlaying)} className="text-white text-2xl mb-2 hover:scale-110 transition-all">
           {isPlaying ? "Ⅱ" : "▶"}
         </button>
         <div className="flex items-center space-x-3 w-full">
-          <span className="text-[10px] text-neutral-500 font-bold">{formatTime(currentTime)}</span>
-          <input 
-            type="range" 
-            min="0" 
-            max={duration || 0} 
-            value={currentTime} 
-            onChange={handleProgressChange}
-            className="flex-1 accent-amber-500 h-1 bg-white/10 rounded-full cursor-pointer" 
-          />
-          <span className="text-[10px] text-neutral-500 font-bold">{formatTime(duration)}</span>
+          <span className="text-[9px] text-neutral-600 font-bold w-8">{formatTime(currentTime)}</span>
+          <div className="relative flex-1 h-1 flex items-center">
+            <input 
+              type="range" 
+              min="0" 
+              max={duration || 0} 
+              value={currentTime} 
+              onChange={handleProgressChange}
+              className="absolute w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-amber-500" 
+            />
+          </div>
+          <span className="text-[9px] text-neutral-600 font-bold w-8">{formatTime(duration)}</span>
         </div>
       </div>
 
-      <div className="w-1/3 flex justify-end items-center space-x-4">
-        <span className="text-neutral-500 text-xl">🔊</span>
-        <input type="range" className="w-24 accent-white h-1 bg-white/10 rounded-full" />
+      {/* SAĞ: SES AYARI */}
+      <div className="w-1/4 flex justify-end items-center space-x-3">
+        <span className="text-neutral-600 text-sm">Vol</span>
+        <input type="range" className="w-20 accent-neutral-500 h-1 bg-white/10 rounded-full" />
       </div>
     </div>
   );
