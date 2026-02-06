@@ -31,7 +31,7 @@ const App: React.FC = () => {
     TR: {
       contactTitle: "MÜZİĞİNİ PAYLAŞ",
       contactSub: '"Tozlu raflarda unutulmuş bir kayıt mı var?"',
-      contactDesc: "Kültürel mirasımızı birlikte ilmek ilmek işleyelim. Elinizdeki yöresel kayıtları, düğün videolarını veya eski kaset çekimlerini bize ulaştırın, bu platformda ölümsüzleştirelim.",
+      contactDesc: "Kültürel mirasımızı birlikte ilmek ilmek işleyelim. Elinizdeki yöresel kayıtları bize ulaştırın.",
       waBtn: "WHATSAPP",
       waHatti: "WHATSAPP HATTI",
       waNum: "0505 225 06 55",
@@ -42,7 +42,7 @@ const App: React.FC = () => {
     KU: {
       contactTitle: "MUZÎKA XWE PARVE BIKE",
       contactSub: '"Ma qeydeke ji bîr kiriye heye?"',
-      contactDesc: "Werin em mîrateya xwe ya çandî bi hev re biparêzin. Qeydên xwe, vîdyoyên dawetê an qeydên kasetên kevin ji me re bişînin, em li ser vê platformê bidin jiyandin.",
+      contactDesc: "Werin em mîrateya xwe ya çandî bi hev re biparêzin. Qeydên xwe ji me re bişînin.",
       waBtn: "WHATSAPP",
       waHatti: "XETA WHATSAPPÊ",
       waNum: "0505 225 06 55",
@@ -66,6 +66,17 @@ const App: React.FC = () => {
     setLikedSongs([...likedSongs, id]);
   };
 
+  const editSong = (id: number) => {
+    const song = songs.find((s:any) => s.id === id);
+    if(song) {
+      const newTitle = prompt("Şarkı Adı:", song.title);
+      const newArtist = prompt("Sanatçı Adı:", song.artist);
+      if(newTitle && newArtist) {
+        setSongs(songs.map((s:any) => s.id === id ? {...s, title: newTitle, artist: newArtist} : s));
+      }
+    }
+  };
+
   const filteredSongs = songs
     .filter((s: any) => activeCategory === 'Tümü' || activeCategory === 'Hemû' || s.category === activeCategory)
     .sort((a: any, b: any) => (b.likes || 0) - (a.likes || 0));
@@ -81,38 +92,37 @@ const App: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto px-4 md:px-10 pb-40 pt-8">
           
+          {/* ANA SAYFA */}
           {activeTab === 'home' && (
             <div className="animate-in fade-in duration-500">
-               <div className="mb-10 rounded-[3rem] relative overflow-hidden h-[320px] flex items-center bg-neutral-900 border border-white/5 shadow-2xl shadow-black/50">
+               <div className="mb-8 rounded-[3rem] relative overflow-hidden h-[300px] flex items-center bg-neutral-900 border border-white/5 shadow-2xl">
                 <img src={bannerUrl} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />
-                <div className="relative z-10 p-16 w-full text-center md:text-left">
-                  <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter leading-tight drop-shadow-2xl">{bannerText}</h2>
-                </div>
+                <div className="relative z-10 p-16"><h2 className="text-4xl font-black italic uppercase tracking-tighter leading-tight drop-shadow-2xl">{bannerText}</h2></div>
               </div>
               
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
                 {["Patnos Türküleri", "Patnoslu Sanatçılar", "Dengbêjler", "Sizden Gelenler"].map((cat) => (
                   <div key={cat} onClick={() => setActiveCategory(cat)} 
-                    className={`p-8 rounded-[2.5rem] h-32 flex flex-col justify-end cursor-pointer transition-all duration-300 border shadow-lg
-                    ${activeCategory === cat ? 'bg-amber-500 text-black border-amber-400 scale-[1.02] font-black' : 'bg-[#121212] border-white/5 text-neutral-400 hover:bg-neutral-800 hover:text-white hover:border-white/20'}`}>
-                    <span className="text-xs uppercase font-black italic tracking-widest leading-none">{cat}</span>
+                    className={`p-8 rounded-[2rem] h-28 flex flex-col justify-end cursor-pointer transition-all duration-300 border
+                    ${activeCategory === cat ? 'bg-amber-500 text-black border-amber-400 font-black' : 'bg-neutral-900/50 border-white/5 text-neutral-400 hover:bg-neutral-800 hover:text-white hover:border-white/20'}`}>
+                    <span className="text-[11px] uppercase font-black italic tracking-widest leading-none">{cat}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {filteredSongs.map((song: any) => (
-                  <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 hover:bg-white/10 transition-all group">
+                  <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 transition-all group">
                     <div className="flex items-center space-x-5 cursor-pointer flex-1" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
-                      <img src={song.cover} className="w-12 h-12 rounded-xl object-cover shadow-lg group-hover:scale-105 transition-transform" alt="" />
+                      <img src={song.cover} className="w-12 h-12 rounded-xl object-cover shadow-lg" alt="" />
                       <div><p className="font-bold text-sm tracking-tight">{song.title}</p><p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">{song.artist}</p></div>
                     </div>
                     <div className="flex items-center space-x-6">
                       <div className="flex items-center space-x-2">
-                         <span className={`text-[11px] font-black ${likedSongs.includes(song.id) ? 'text-red-500' : 'text-amber-500'}`}>{song.likes || 0}</span>
+                         <span className={`text-[10px] font-black ${likedSongs.includes(song.id) ? 'text-red-500' : 'text-amber-500'}`}>{song.likes || 0}</span>
                          <button onClick={() => handleLike(song.id)} className={`${likedSongs.includes(song.id) ? 'text-red-500 scale-110' : 'text-neutral-500 hover:text-red-400'} text-xl transition-all`}>♥</button>
                       </div>
-                      <a href={song.url} download={`${song.title}.mp3`} className="text-neutral-500 hover:text-white text-xl transition-colors">⇩</a>
+                      <a href={song.url} download={`${song.title}.mp3`} className="text-neutral-400 hover:text-white text-xl">⇩</a>
                     </div>
                   </div>
                 ))}
@@ -120,27 +130,28 @@ const App: React.FC = () => {
             </div>
           )}
 
+          {/* İLETİŞİM - 3 KUTULU VERSİYON */}
           {activeTab === 'contact' && (
-             <div className="max-w-5xl mx-auto py-10 space-y-8 animate-in slide-in-from-bottom-10 duration-700">
-                <div className="bg-amber-500 rounded-[4rem] p-16 text-center text-black shadow-2xl relative overflow-hidden">
+             <div className="max-w-5xl mx-auto py-10 space-y-8 animate-in slide-in-from-bottom-6">
+                <div className="bg-amber-500 rounded-[3.5rem] p-16 text-center text-black shadow-2xl relative overflow-hidden">
                    <h2 className="text-6xl font-black mb-4 italic uppercase leading-none tracking-tighter">{t[lang].contactTitle}</h2>
-                   <p className="font-black text-xl italic mb-4 opacity-90">{t[lang].contactSub}</p>
-                   <p className="text-sm font-bold max-w-2xl mx-auto mb-10 leading-relaxed opacity-80">{t[lang].contactDesc}</p>
+                   <p className="font-black text-xl italic mb-6 opacity-90">{t[lang].contactSub}</p>
+                   <p className="text-xs font-bold max-w-2xl mx-auto mb-10 leading-relaxed opacity-75">{t[lang].contactDesc}</p>
                    <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" className="inline-block bg-black text-white px-14 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 transition-all shadow-xl">
                     {t[lang].waBtn}
                    </a>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                   <div className="bg-[#111111] p-10 rounded-[3rem] border border-white/5 text-center shadow-xl">
+                   <div className="bg-neutral-900 p-10 rounded-[2.5rem] border border-white/5 text-center shadow-xl">
                       <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest">{t[lang].adrTitle}</h3>
-                      <p className="text-xs italic text-neutral-400 font-bold leading-relaxed">{t[lang].adrText}</p>
+                      <p className="text-[11px] italic text-neutral-400 font-bold leading-relaxed">{t[lang].adrText}</p>
                    </div>
-                   <div className="bg-[#111111] p-10 rounded-[3rem] border border-white/5 text-center shadow-xl">
+                   <div className="bg-neutral-900 p-10 rounded-[2.5rem] border border-white/5 text-center shadow-xl">
                       <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest">{t[lang].waHatti}</h3>
-                      <p className="text-xl italic text-neutral-200 font-black tracking-tighter">{t[lang].waNum}</p>
+                      <p className="text-lg italic text-neutral-200 font-black tracking-tighter">{t[lang].waNum}</p>
                    </div>
-                   <div className="bg-[#111111] p-10 rounded-[3rem] border border-white/5 text-center shadow-xl">
+                   <div className="bg-neutral-900 p-10 rounded-[2.5rem] border border-white/5 text-center shadow-xl">
                       <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest">{t[lang].mailTitle}</h3>
                       <p className="text-sm italic text-neutral-200 font-black">patnosumuz@gmail.com</p>
                    </div>
@@ -148,19 +159,20 @@ const App: React.FC = () => {
              </div>
           )}
 
+          {/* PANEL - DÜZENLE VE SİL GERİ GELDİ */}
           {activeTab === 'admin' && (
-            <div className="max-w-4xl mx-auto space-y-8">
+            <div className="max-w-4xl mx-auto space-y-8 animate-in zoom-in-95">
                <div className="bg-neutral-900 p-8 rounded-[2.5rem] border border-amber-500/20">
-                  <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest">Görünüm Ayarları</h3>
+                  <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest italic">Görünüm Ayarları</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-amber-500" value={logoUrl} onChange={(e)=>setLogoUrl(e.target.value)} placeholder="Logo URL" />
-                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-amber-500" value={bannerUrl} onChange={(e)=>setBannerUrl(e.target.value)} placeholder="Banner URL" />
-                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-amber-500" value={bannerText} onChange={(e)=>setBannerText(e.target.value)} placeholder="Banner Yazısı" />
+                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-amber-500 transition-all" value={logoUrl} onChange={(e)=>setLogoUrl(e.target.value)} placeholder="Logo URL" />
+                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-amber-500 transition-all" value={bannerUrl} onChange={(e)=>setBannerUrl(e.target.value)} placeholder="Banner URL" />
+                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-amber-500 transition-all" value={bannerText} onChange={(e)=>setBannerText(e.target.value)} placeholder="Banner Yazısı" />
                   </div>
                </div>
 
-               <div className="bg-neutral-900 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl">
-                  <h2 className="text-xl font-black text-amber-500 mb-8 uppercase italic border-b border-white/5 pb-4 tracking-tighter">YENİ ŞARKI EKLE</h2>
+               <div className="bg-neutral-900 p-10 rounded-[3rem] border border-white/10 shadow-2xl">
+                  <h2 className="text-xl font-black text-amber-500 mb-8 uppercase italic border-b border-white/5 pb-4">YENİ ŞARKI EKLE</h2>
                   <form onSubmit={(e) => { e.preventDefault(); setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]); alert("Şarkı eklendi!"); }} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <input type="text" placeholder="Şarkı Adı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} required />
@@ -168,11 +180,33 @@ const App: React.FC = () => {
                     </div>
                     <input type="text" placeholder="Kapak URL" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.cover} onChange={e => setNewSong({...newSong, cover: e.target.value})} required />
                     <input type="text" placeholder="Müzik URL" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} required />
-                    <select className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm text-white" value={newSong.category} onChange={e => setNewSong({...newSong, category: e.target.value})}>
+                    <select className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm text-white outline-none" value={newSong.category} onChange={e => setNewSong({...newSong, category: e.target.value})}>
                       {["Patnos Türküleri", "Patnoslu Sanatçılar", "Dengbêjler", "Sizden Gelenler"].map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                     <button type="submit" className="w-full bg-amber-500 text-black font-black py-5 rounded-2xl shadow-xl uppercase tracking-widest hover:bg-amber-400 transition-all">KAYDET VE YAYINLA</button>
                   </form>
+               </div>
+
+               {/* KAYIP OLAN DÜZENLE/SİL LİSTESİ BURADA */}
+               <div className="bg-neutral-900 p-10 rounded-[3rem] border border-red-500/10 shadow-xl">
+                  <h2 className="text-lg font-black text-red-500 mb-6 uppercase italic tracking-tighter">ŞARKILARI YÖNET</h2>
+                  <div className="space-y-3">
+                    {songs.map((song: any) => (
+                      <div key={song.id} className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+                        <div className="flex items-center space-x-4">
+                          <img src={song.cover} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                          <div>
+                            <p className="font-bold text-sm tracking-tight">{song.title}</p>
+                            <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest">{song.artist}</p>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                           <button onClick={() => editSong(song.id)} className="bg-amber-500/10 text-amber-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-amber-500 hover:text-black transition-all uppercase italic">Düzenle</button>
+                           <button onClick={() => { if(window.confirm("Bu şarkıyı silmek istediğinize emin misiniz?")) setSongs(songs.filter((s:any) => s.id !== song.id)) }} className="bg-red-500/10 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-red-500 hover:text-white transition-all uppercase italic">Sil</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                </div>
             </div>
           )}
