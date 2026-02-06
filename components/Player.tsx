@@ -4,11 +4,19 @@ const Player: React.FC<any> = ({ song, isPlaying, setIsPlaying }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(0.7); // Başlangıç sesi %70
 
   useEffect(() => {
     if (isPlaying) audioRef.current?.play();
     else audioRef.current?.pause();
   }, [isPlaying, song]);
+
+  // Ses seviyesi değiştiğinde gerçek sesi güncelle
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   const onTimeUpdate = () => {
     setCurrentTime(audioRef.current?.currentTime || 0);
@@ -42,7 +50,7 @@ const Player: React.FC<any> = ({ song, isPlaying, setIsPlaying }) => {
         </div>
       </div>
 
-      {/* ORTA: KONTROL VE SAF ÇUBUK */}
+      {/* ORTA: OYNATMA VE İLERLEME ÇUBUĞU */}
       <div className="flex flex-col items-center w-1/2 px-4">
         <button onClick={() => setIsPlaying(!isPlaying)} className="text-white text-2xl mb-2 hover:scale-110 transition-all">
           {isPlaying ? "Ⅱ" : "▶"}
@@ -63,10 +71,18 @@ const Player: React.FC<any> = ({ song, isPlaying, setIsPlaying }) => {
         </div>
       </div>
 
-      {/* SAĞ: SES AYARI */}
+      {/* SAĞ: AKTİF SES AYARI (VOLUME) */}
       <div className="w-1/4 flex justify-end items-center space-x-3">
-        <span className="text-neutral-600 text-sm">Vol</span>
-        <input type="range" className="w-20 accent-neutral-500 h-1 bg-white/10 rounded-full" />
+        <span className="text-neutral-600 text-[10px] font-black uppercase">Vol</span>
+        <input 
+          type="range" 
+          min="0" 
+          max="1" 
+          step="0.01" 
+          value={volume} 
+          onChange={(e) => setVolume(Number(e.target.value))}
+          className="w-20 accent-amber-500 h-1 bg-white/10 rounded-full cursor-pointer appearance-none" 
+        />
       </div>
     </div>
   );
