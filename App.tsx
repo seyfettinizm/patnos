@@ -8,12 +8,14 @@ const App: React.FC = () => {
   const [lang, setLang] = useState<'TR' | 'KU'>(() => (localStorage.getItem('appLang') as 'TR' | 'KU') || 'TR');
   const [activeCategory, setActiveCategory] = useState('Tümü');
   
+  // LOGO, BANNER VE BANNER YAZISI STATE'LERİ
   const [logoUrl, setLogoUrl] = useState(() => localStorage.getItem('appLogo') || "");
   const [bannerUrl, setBannerUrl] = useState(() => localStorage.getItem('appBanner') || "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=1200");
+  const [bannerText, setBannerText] = useState(() => localStorage.getItem('appBannerText') || "");
 
   const t: any = {
     TR: {
-      search: "Ara...", bannerTitle: "Patnos'tan İzmir'e Bir Melodi...",
+      search: "Ara...", bannerTitle: bannerText || "Patnos'tan İzmir'e Bir Melodi...",
       collTitle: "ÖZEL KOLEKSİYONLAR", popTitle: "ŞU AN POPÜLER",
       categories: ["Tümü", "Patnos Türküleri", "Patnoslu Sanatçılar", "Dengbêjler", "Sizden Gelenler"],
       contactTitle: "MÜZİĞİNİ PAYLAŞ", 
@@ -21,11 +23,11 @@ const App: React.FC = () => {
       contactNot2: "Kültürel mirasımızı birlikte ilmek ilmek işleyelim. Elinizdeki yöresel kayıtları veya kendi sesinizden parçaları bize ulaştırın; bu tınılar İzmir'den dünyaya yankılansın.",
       waBtn: "WHATSAPP", adminTitle: "İÇERİK YÖNETİMİ", saveBtn: "SİSTEME EKLE",
       address: "Yeşilbağlar Mah. 637/33 Sok. No: 25 Buca/İzmir",
-      labels: ["Müzik Adı", "Sanatçı", "Kapak (URL)", "Müzik (URL)", "Klasör"],
-      deleteTitle: "YÜKLÜ ŞARKILAR (SİLME PANELİ)"
+      labels: ["Müzik Adı", "Sanatçı", "Kapak (URL)", "Müzik (URL)", "Klasör", "Banner Yazısı"],
+      deleteTitle: "ŞARKI YÖNETİMİ (DÜZENLE / SİL)"
     },
     KU: {
-      search: "Bigere...", bannerTitle: "Ji Patnosê ber bi Îzmîrê ve...",
+      search: "Bigere...", bannerTitle: bannerText || "Ji Patnosê ber bi Îzmîrê ve...",
       collTitle: "KOLEKSİYONÊN TAYBET", popTitle: "NIHA POPULER E",
       categories: ["Hemû", "Stranên Patnosê", "Hunermendên Patnosî", "Dengbêj", "Ji We Hatine"],
       contactTitle: "MUZÎKA XWE PARVE BIKE", 
@@ -33,8 +35,8 @@ const App: React.FC = () => {
       contactNot2: "Werin em mîrateya xwe ya çandî bi hev re biparêzin. Qeydên xwe yên herêmî an jî stranên bi dengê xwe ji me re bişînin; bila ev deng ji Îzmîrê li hemû cîhanê deng vede.",
       waBtn: "WHATSAPP", adminTitle: "RÊVEBERIYA NAVEROKÊ", saveBtn: "LÊ ZÊDE BIKE",
       address: "Taxa Yeşilbağlar. 637/33 Sok. No: 25 Buca/Îzmîr",
-      labels: ["Navê Stranê", "Hunermend", "Berg", "Lînk", "Klasor"],
-      deleteTitle: "STRANÊN BARKIRÎ (PANELA SÎKIRINÊ)"
+      labels: ["Navê Stranê", "Hunermend", "Berg", "Lînk", "Klasor", "Nivîsa Banner"],
+      deleteTitle: "RÊVEBERIYA STRANAN (SERAST KIRIN / SÎKIRIN)"
     }
   };
 
@@ -44,7 +46,6 @@ const App: React.FC = () => {
   });
 
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPass, setAdminPass] = useState('');
   const [currentSong, setCurrentSong] = useState(songs[0] || null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [newSong, setNewSong] = useState({ title: '', artist: '', cover: '', url: '', category: 'Patnos Türküleri' });
@@ -54,12 +55,23 @@ const App: React.FC = () => {
     localStorage.setItem('myMusicArchiive', JSON.stringify(songs));
     localStorage.setItem('appLogo', logoUrl);
     localStorage.setItem('appBanner', bannerUrl);
-  }, [lang, songs, logoUrl, bannerUrl]);
+    localStorage.setItem('appBannerText', bannerText);
+  }, [lang, songs, logoUrl, bannerUrl, bannerText]);
 
-  // ŞARKI SİLME FONKSİYONU
   const deleteSong = (id: number) => {
     if(window.confirm("Bu şarkıyı silmek istediğinize emin misiniz?")) {
       setSongs(songs.filter((s: any) => s.id !== id));
+    }
+  };
+
+  const editSong = (id: number) => {
+    const song = songs.find((s:any) => s.id === id);
+    if(song) {
+      const newTitle = prompt("Yeni Şarkı Adı:", song.title);
+      const newArtist = prompt("Yeni Sanatçı Adı:", song.artist);
+      if(newTitle && newArtist) {
+        setSongs(songs.map((s:any) => s.id === id ? {...s, title: newTitle, artist: newArtist} : s));
+      }
     }
   };
 
@@ -69,7 +81,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} setIsAdmin={setIsAdmin} adminPass={adminPass} setAdminPass={setAdminPass} handleAdminLogin={(e:any) => { e.preventDefault(); if(adminPass === 'Mihriban04') setIsAdmin(true); }} lang={lang} logoUrl={logoUrl} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} setIsAdmin={setIsAdmin} lang={lang} logoUrl={logoUrl} />
 
       <main className="flex-1 flex flex-col relative overflow-hidden">
         <header className="h-20 flex items-center justify-between px-8 z-30 shrink-0">
@@ -86,25 +98,32 @@ const App: React.FC = () => {
                <div className="mb-12 rounded-[3rem] relative overflow-hidden h-[350px] flex items-center bg-neutral-900 border border-white/5 shadow-2xl">
                 <img src={bannerUrl} className="absolute inset-0 w-full h-full object-cover opacity-30" alt="" />
                 <div className="relative z-10 p-16">
-                   <h2 className="text-5xl font-black mb-4 italic uppercase tracking-tighter">{t[lang].bannerTitle}</h2>
+                   <h2 className="text-5xl font-black mb-4 italic uppercase tracking-tighter leading-tight max-w-2xl">{t[lang].bannerTitle}</h2>
                 </div>
               </div>
+              
               <div className="mb-12">
                 <h3 className="text-xl font-black mb-6 flex items-center space-x-3 uppercase tracking-tighter"><span className="w-1.5 h-6 bg-amber-500 rounded-full"></span><span>{t[lang].collTitle}</span></h3>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                   {t[lang].categories.slice(1).map((cat: string) => (
-                    <div key={cat} onClick={() => setActiveCategory(cat)} className="bg-neutral-900/50 border border-white/5 p-8 rounded-[2.5rem] h-52 flex flex-col justify-end cursor-pointer hover:bg-amber-500 hover:text-black transition-all shadow-xl">
+                    <div key={cat} onClick={() => setActiveCategory(cat)} className="bg-neutral-900/50 border border-white/5 p-8 rounded-[2.5rem] h-52 flex flex-col justify-end cursor-pointer hover:bg-amber-500 hover:text-black transition-all">
                       <p className="text-2xl font-black uppercase italic leading-tight">{cat}</p>
                     </div>
                   ))}
                 </div>
               </div>
+
               <div className="space-y-2">
                 {filteredSongs.map((song: any) => (
                   <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 transition-all group">
                     <div className="flex items-center space-x-5 cursor-pointer flex-1" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
-                      <img src={song.cover} className="w-14 h-14 rounded-xl object-cover shadow-2xl" alt="" />
+                      <img src={song.cover} className="w-14 h-14 rounded-xl object-cover" alt="" />
                       <div><p className="font-bold text-sm">{song.title}</p><p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">{song.artist}</p></div>
+                    </div>
+                    {/* İNDİR VE BEĞEN SİMGELERİ GERİ GELDİ */}
+                    <div className="flex items-center space-x-4 opacity-0 group-hover:opacity-100 transition-all">
+                      <button className="text-neutral-500 hover:text-red-500 text-xl">♥</button>
+                      <a href={song.url} download className="text-neutral-500 hover:text-white text-xl">⇩</a>
                     </div>
                   </div>
                 ))}
@@ -112,72 +131,66 @@ const App: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'contact' && (
-            <div className="max-w-4xl mx-auto py-10 space-y-8 animate-in slide-in-from-bottom-6 duration-700">
-              <div className="bg-[#f59e0b] rounded-[3.5rem] p-12 md:p-16 text-center text-black shadow-2xl">
-                 <h2 className="text-5xl md:text-6xl font-[1000] mb-8 italic tracking-tighter uppercase leading-none">{t[lang].contactTitle}</h2>
-                 <div className="flex flex-col items-center justify-center space-y-4 mb-10">
-                    <p className="text-black font-[900] text-xl md:text-2xl italic leading-tight max-w-2xl">{t[lang].contactNot1}</p>
-                    <div className="w-12 h-0.5 bg-black/20 rounded-full my-2"></div>
-                    <p className="text-black/90 font-bold text-lg md:text-xl italic leading-relaxed max-w-2xl px-4">{t[lang].contactNot2}</p>
-                 </div>
-                 <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" className="inline-block bg-black text-white px-20 py-6 rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl hover:bg-neutral-900 transition-all active:scale-95">{t[lang].waBtn}</a>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 <div className="bg-neutral-900/80 border border-white/5 p-10 rounded-[3rem] text-center"><h3 className="text-amber-500 font-black text-[11px] mb-4 uppercase">ADRES</h3><p className="font-black text-[11px] italic text-neutral-300">{t[lang].address}</p></div>
-                 <div className="bg-neutral-900/80 border border-white/5 p-10 rounded-[3rem] text-center"><h3 className="text-amber-500 font-black text-[11px] mb-4 uppercase">WHATSAPP</h3><p className="font-black text-2xl text-neutral-200">0505 225 06 55</p></div>
-                 <div className="bg-neutral-900/80 border border-white/5 p-10 rounded-[3rem] text-center"><h3 className="text-amber-500 font-black text-[11px] mb-4 uppercase">E-POSTA</h3><p className="font-black text-sm italic text-neutral-200">patnosumuz@gmail.com</p></div>
-              </div>
-            </div>
-          )}
-
           {activeTab === 'admin' && (
             <div className="max-w-4xl mx-auto py-10 space-y-12 animate-in zoom-in">
-               {/* Görsel Ayarları */}
                <div className="bg-neutral-900 p-8 rounded-[2.5rem] border border-amber-500/20 shadow-2xl">
-                  <h3 className="text-amber-500 font-black mb-6 uppercase tracking-widest text-[10px]">Görünüm Ayarları</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs" value={logoUrl} onChange={(e)=>setLogoUrl(e.target.value)} placeholder="Logo URL" />
-                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs" value={bannerUrl} onChange={(e)=>setBannerUrl(e.target.value)} placeholder="Banner URL" />
+                  <h3 className="text-amber-500 font-black mb-6 uppercase tracking-widest text-[10px]">Genel Görünüm Ayarları</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs" value={logoUrl} onChange={(e)=>setLogoUrl(e.target.value)} placeholder="Logo URL (Şeffaf)" />
+                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs" value={bannerUrl} onChange={(e)=>setBannerUrl(e.target.value)} placeholder="Banner Görsel URL" />
+                    <input type="text" className="bg-black border border-white/10 p-4 rounded-xl text-xs" value={bannerText} onChange={(e)=>setBannerText(e.target.value)} placeholder={t[lang].labels[5]} />
                   </div>
                </div>
 
-               {/* Müzik Ekleme Formu */}
-               <div className="bg-neutral-900 p-8 md:p-12 rounded-[2.5rem] border border-white/10 shadow-2xl">
+               <div className="bg-neutral-900 p-8 md:p-12 rounded-[3.5rem] border border-white/10 shadow-2xl">
                   <h2 className="text-2xl font-black text-amber-500 mb-8 uppercase italic border-b border-white/5 pb-6">{t[lang].adminTitle}</h2>
-                  <form onSubmit={(e) => { e.preventDefault(); setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]); alert("Müzik Eklendi!"); }} className="space-y-4">
+                  <form onSubmit={(e) => { e.preventDefault(); setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]); alert("Eklendi!"); }} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <input type="text" placeholder={t[lang].labels[0]} className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} />
                       <input type="text" placeholder={t[lang].labels[1]} className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.artist} onChange={e => setNewSong({...newSong, artist: e.target.value})} />
                     </div>
                     <input type="text" placeholder={t[lang].labels[2]} className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.cover} onChange={e => setNewSong({...newSong, cover: e.target.value})} />
                     <input type="text" placeholder={t[lang].labels[3]} className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} />
-                    <select className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm text-white" value={newSong.category} onChange={e => setNewSong({...newSong, category: e.target.value})}>
+                    <select className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.category} onChange={e => setNewSong({...newSong, category: e.target.value})}>
                       {t[lang].categories.slice(1).map((c: string) => <option key={c} value={c}>{c}</option>)}
                     </select>
-                    <button type="submit" className="w-full bg-amber-500 text-black font-black py-5 rounded-2xl uppercase tracking-widest shadow-xl hover:bg-white transition-all">SİSTEME EKLE</button>
+                    <button type="submit" className="w-full bg-amber-500 text-black font-black py-5 rounded-2xl uppercase tracking-widest shadow-xl">SİSTEME EKLE</button>
                   </form>
                </div>
 
-               {/* ŞARKI SİLME LİSTESİ (YENİ EKLEDİM) */}
-               <div className="bg-neutral-900 p-8 md:p-12 rounded-[2.5rem] border border-red-500/10 shadow-2xl">
+               <div className="bg-neutral-900 p-8 md:p-12 rounded-[3.5rem] border border-red-500/10 shadow-2xl">
                   <h2 className="text-xl font-black text-red-500 mb-8 uppercase italic tracking-tighter">{t[lang].deleteTitle}</h2>
                   <div className="space-y-3">
                     {songs.map((song: any) => (
-                      <div key={song.id} className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5 group hover:border-red-500/30 transition-all">
+                      <div key={song.id} className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5 group">
                         <div className="flex items-center space-x-4">
-                          <img src={song.cover} className="w-10 h-10 rounded-lg object-cover grayscale group-hover:grayscale-0" alt="" />
-                          <div>
-                            <p className="font-bold text-sm">{song.title}</p>
-                            <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest">{song.artist}</p>
-                          </div>
+                          <img src={song.cover} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                          <div><p className="font-bold text-sm">{song.title}</p><p className="text-[9px] text-neutral-600 font-black uppercase">{song.artist}</p></div>
                         </div>
-                        <button onClick={() => deleteSong(song.id)} className="bg-red-500/10 text-red-500 p-3 rounded-xl hover:bg-red-500 hover:text-white transition-all text-xs font-black">SİL</button>
+                        <div className="flex space-x-2">
+                           <button onClick={() => editSong(song.id)} className="bg-amber-500/10 text-amber-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-amber-500 hover:text-black">DÜZENLE</button>
+                           <button onClick={() => deleteSong(song.id)} className="bg-red-500/10 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-red-500 hover:text-white">SİL</button>
+                        </div>
                       </div>
                     ))}
                   </div>
                </div>
             </div>
+          )}
+
+          {activeTab === 'contact' && (
+             <div className="max-w-4xl mx-auto py-10 space-y-8 animate-in slide-in-from-bottom-6">
+                <div className="bg-[#f59e0b] rounded-[3.5rem] p-12 md:p-16 text-center text-black shadow-2xl">
+                   <h2 className="text-5xl md:text-6xl font-black mb-8 italic uppercase leading-none">{t[lang].contactTitle}</h2>
+                   <p className="text-black font-black text-xl md:text-2xl italic leading-tight mb-8 max-w-2xl mx-auto">{t[lang].contactNot1}</p>
+                   <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" className="inline-block bg-black text-white px-20 py-6 rounded-full font-black uppercase text-sm tracking-widest shadow-2xl">{t[lang].waBtn}</a>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   <div className="bg-neutral-900 p-10 rounded-[3rem] text-center border border-white/5"><h3 className="text-amber-500 font-black text-[10px] mb-4 uppercase">ADRES</h3><p className="font-black text-[10px] italic text-neutral-300">{t[lang].address}</p></div>
+                   <div className="bg-neutral-900 p-10 rounded-[3rem] text-center border border-white/5"><h3 className="text-amber-500 font-black text-[10px] mb-4 uppercase">WHATSAPP</h3><p className="font-black text-2xl text-neutral-200">0505 225 06 55</p></div>
+                   <div className="bg-neutral-900 p-10 rounded-[3rem] text-center border border-white/5"><h3 className="text-amber-500 font-black text-[10px] mb-4 uppercase">E-POSTA</h3><p className="font-black text-sm italic text-neutral-200">patnosumuz@gmail.com</p></div>
+                </div>
+             </div>
           )}
         </div>
         {currentSong && <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-white/5 h-28 px-4 md:px-10 z-50 backdrop-blur-2xl"><Player song={currentSong} isPlaying={isPlaying} setIsPlaying={setIsPlaying} onNext={() => {}} onPrev={() => {}} /></div>}
