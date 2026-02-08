@@ -34,132 +34,162 @@ export default function App() {
     await supabase.from('settings').update({ value: { songs: newSongs, settings: newSettings } }).eq('id', 'app_data');
   };
 
-  const handleNextSong = () => {
-    if (currentSongIndex !== null && currentSongIndex < songs.length - 1) {
-      setCurrentSongIndex(currentSongIndex + 1);
-    } else {
-      setCurrentSongIndex(null); // Liste bitti
-    }
+  // Otomatik Süre Hesaplama Fonksiyonu
+  const getDuration = (url: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const audio = new Audio();
+      audio.src = url;
+      audio.addEventListener('loadedmetadata', () => {
+        const min = Math.floor(audio.duration / 60);
+        const sec = Math.floor(audio.duration % 60);
+        resolve(`${min}:${sec < 10 ? '0' : ''}${sec}`);
+      });
+      audio.addEventListener('error', () => resolve("3:15"));
+    });
   };
 
-  const handleAdminAction = () => {
-    const audio = new Audio(form.url);
-    audio.onloadedmetadata = async () => {
-      const minutes = Math.floor(audio.duration / 60);
-      const seconds = Math.floor(audio.duration % 60);
-      const duration = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-      
-      let updated;
-      if (editId) {
-        updated = songs.map(s => s.id === editId ? { ...form, id: editId, duration } : s);
-      } else {
-        updated = [{ ...form, id: Date.now(), likes: 0, duration }, ...songs];
-      }
-      
-      setSongs(updated);
-      await syncDB(updated);
-      setEditId(null);
-      setForm({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
-      alert("İşlem Başarılı!");
-    };
+  const handleAdminAction = async () => {
+    const duration = await getDuration(form.url);
+    let updated;
+    if (editId) {
+      updated = songs.map(s => s.id === editId ? { ...form, id: editId, duration } : s);
+    } else {
+      updated = [{ ...form, id: Date.now(), likes: 0, duration }, ...songs];
+    }
+    setSongs(updated);
+    await syncDB(updated);
+    setEditId(null);
+    setForm({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
+    alert("Kütüphane Başarıyla Güncellendi!");
+  };
+
+  const handleLike = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    const likedSongs = JSON.parse(localStorage.getItem('p_likes') || '[]');
+    if (likedSongs.includes(id)) return alert("Bu eseri zaten beğendiniz.");
+    const updated = songs.map(s => s.id === id ? { ...s, likes: (s.likes || 0) + 1 } : s);
+    setSongs(updated);
+    likedSongs.push(id);
+    localStorage.setItem('p_likes', JSON.stringify(likedSongs));
+    await syncDB(updated);
+  };
+
+  const handleDownload = async (e: React.MouseEvent, url: string, title: string) => {
+    e.stopPropagation();
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = `${title}.mp3`;
+    link.click();
   };
 
   const filteredSongs = activeTab === "Hepsi" ? songs : songs.filter(s => s.category === activeTab);
   const displayedSongs = (!showFullArchive && activeTab === "Hepsi") ? filteredSongs.slice(0, 6) : filteredSongs;
 
   return (
-    <div style={{ background: '#0a0a0a', color: '#fff', minHeight: '100vh', fontFamily: "'Open Sans', sans-serif" }}>
+    <div style={{ background: '#050505', color: '#fff', minHeight: '100vh', fontFamily: "'Open Sans', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Open+Sans:wght@400;600&display=swap');
-        .main-title { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 26px; color: #fff; margin: 5px 0; }
-        .sub-title { font-family: 'Open Sans', sans-serif; letter-spacing: 4px; color: orange; font-size: 11px; font-weight: 700; }
+        .main-title { font-family: 'Baloo 2', cursive; font-size: 24px; color: #fff; margin: 5px 0; }
+        .sub-title { letter-spacing: 5px; color: orange; font-size: 11px; font-weight: 700; }
+        .label-text { display: block; font-size: 12px; color: orange; margin-bottom: 5px; font-weight: bold; }
         ::-webkit-scrollbar { display: none; }
-        .contact-card:hover { transform: scale(1.02); }
       `}</style>
 
       {/* HEADER */}
-      <header style={{ padding: '30px 0', borderBottom: '1px solid #151515', textAlign: 'center' }}>
-        {settings.logo && <img src={settings.logo} style={{ height: '70px', borderRadius: '50%', marginBottom: '10px' }} alt="Logo" />}
-        <h1 className="main-title">İZMİR PATNOSLULAR DERNEĞİ</h1>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '15px' }}>
-          <div style={{ height: '1px', width: '40px', background: 'orange' }} />
-          <span className="sub-title">MÜZİK KUTUSU</span>
-          <div style={{ height: '1px', width: '40px', background: 'orange' }} />
+      <header style={{ padding: '25px 0', borderBottom: '1px solid #111', textAlign: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {settings.logo && <img src={settings.logo} style={{ height: '55px', width: '55px', borderRadius: '50%', marginBottom: '8px', objectFit: 'cover' }} alt="Logo" />}
+          <h1 className="main-title">İZMİR PATNOSLULAR DERNEĞİ</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+            <div style={{ height: '1px', width: '30px', background: 'orange' }} />
+            <span className="sub-title">MÜZİK KUTUSU</span>
+            <div style={{ height: '1px', width: '30px', background: 'orange' }} />
+          </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '25px' }}>
-          <button onClick={() => setView('home')} style={navBtn}>Ana Sayfa</button>
-          <button onClick={() => setView('contact')} style={navBtn}>İletişim</button>
-          <button onClick={() => setView('admin')} style={navBtn}>Yönetim</button>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+          <button onClick={() => setView('home')} style={navLink}>Ana Sayfa</button>
+          <button onClick={() => setView('contact')} style={navLink}>İletişim</button>
+          <button onClick={() => setView('admin')} style={navLink}>Yönetim</button>
         </div>
       </header>
 
-      <main style={{ padding: '20px 5%', maxWidth: '900px', margin: 'auto' }}>
+      <main style={{ padding: '20px 5%', maxWidth: '850px', margin: 'auto' }}>
         
         {/* VIEW: İLETİŞİM */}
         {view === 'contact' && (
           <div style={{ animation: 'fadeIn 0.5s ease' }}>
             <div style={culturalBox}>
-              <h2 style={{ fontFamily: "'Baloo 2'", color: 'orange' }}>Kültür Mirasımıza Ses Olun</h2>
-              <p style={{ fontStyle: 'italic', lineHeight: '1.6', fontSize: '15px' }}>"Söz uçar, tel kalır; süzülür gönülden sese ulaşır."</p>
-              <div style={{ color: '#FFD700', fontWeight: 'bold', marginTop: '15px', fontSize: '13px' }}>
+              <h2 style={{ fontFamily: "'Baloo 2'", color: 'orange', marginBottom: '10px' }}>Kültür Mirasımıza Ses Olun</h2>
+              <p style={{ fontStyle: 'italic', lineHeight: '1.6', fontSize: '15px', color: '#ccc' }}>
+                "Söz uçar, tel kalır; süzülür gönülden sese ulaşır." <br/>
+                Kıymetli hemşerilerimiz, Patnos'un kadim seslerini, ozanlarımızın mirasını ve sizlerin kıymetli eserlerini yarınlara taşımak en büyük gayemizdir. Bir ezgi, bin hatıradır; gelin bu kutuda sizin de sesiniz yankılansın.
+              </p>
+              <div style={{ color: '#FFD700', fontWeight: 'bold', marginTop: '20px', fontSize: '12px', background: 'rgba(255,215,0,0.1)', padding: '10px', borderRadius: '10px' }}>
                 ⚠️ Önemli Not: Gönderilen eserlerin telif sorumluluğu tamamen gönderen kişiye aittir.
               </div>
             </div>
             <div style={contactGrid}>
-              <div style={{ ...cCard, background: '#25D366' }} onClick={() => window.open('https://wa.me/905052250655')}>
-                <span style={cIcon}>📱</span> <b>WhatsApp</b> <br/> 0505 225 06 55
+              <div style={{ ...cCard, borderLeft: '4px solid #25D366' }} onClick={() => window.open('https://wa.me/905052250655')}>
+                <b>WhatsApp</b><br/>0505 225 06 55
               </div>
-              <div style={{ ...cCard, background: '#3498db' }} onClick={() => window.location.href='mailto:patnosumuz@gmail.com'}>
-                <span style={cIcon}>📧</span> <b>E-Posta</b> <br/> patnosumuz@gmail.com
+              <div style={{ ...cCard, borderLeft: '4px solid #3498db' }} onClick={() => window.location.href='mailto:patnosumuz@gmail.com'}>
+                <b>E-Posta</b><br/>patnosumuz@gmail.com
               </div>
-              <div style={{ ...cCard, background: '#e67e22' }}>
-                <span style={cIcon}>📍</span> <b>Adres</b> <br/> Buca / İZMİR
+              <div style={{ ...cCard, borderLeft: '4px solid #e67e22' }}>
+                <b>Adres</b><br/>
+                <span style={{fontSize:'12px'}}>Yeşilbağlar Mahallesi 637/33 Sok. <br/> No 25. Buca İZMİR</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* VIEW: YÖNETİM PANELİ (TAMAMEN GERİ GELDİ) */}
+        {/* VIEW: YÖNETİM */}
         {view === 'admin' && (
           <div style={{ animation: 'fadeIn 0.3s' }}>
             {!isAuth ? (
-              <div style={{ textAlign: 'center', padding: '50px' }}>
-                <input type="password" placeholder="Yönetici Şifresi" style={inputS} onKeyDown={e => e.key === 'Enter' && (e.currentTarget.value === "Mihriban04" ? setIsAuth(true) : alert("Hatalı"))} />
-                <p style={{ fontSize: '12px', color: '#444' }}>Giriş yapmak için şifreyi yazıp Enter'a basın.</p>
+              <div style={{ textAlign: 'center', marginTop: '50px' }}>
+                <input type="password" placeholder="Şifre Giriniz..." style={inputS} onKeyDown={e => e.key === 'Enter' && (e.currentTarget.value === "Mihriban04" ? setIsAuth(true) : alert("Hata!"))} />
               </div>
             ) : (
               <div>
                 <div style={panelBox}>
-                  <h3 style={{ color: 'orange', marginTop: 0 }}>🖼️ Görsel Ayarları</h3>
-                  <input placeholder="Logo URL" value={settings.logo} style={inputS} onChange={e => setSettings({ ...settings, logo: e.target.value })} />
-                  <input placeholder="Banner URL" value={settings.banner} style={inputS} onChange={e => setSettings({ ...settings, banner: e.target.value })} />
-                  <input placeholder="Banner Yazısı" value={settings.bannerNote} style={inputS} onChange={e => setSettings({ ...settings, bannerNote: e.target.value })} />
-                  <button onClick={() => { syncDB(songs, settings); alert("Görseller güncellendi!"); }} style={mainBtn}>AYARLARI KAYDET</button>
+                  <h3 style={{ color: 'orange', marginTop: 0 }}>🖼️ Görsel ve Metin Ayarları</h3>
+                  <label className="label-text">Logo Görsel URL</label>
+                  <input value={settings.logo} style={inputS} onChange={e => setSettings({ ...settings, logo: e.target.value })} />
+                  <label className="label-text">Banner Görsel URL</label>
+                  <input value={settings.banner} style={inputS} onChange={e => setSettings({ ...settings, banner: e.target.value })} />
+                  <label className="label-text">Banner Üzerindeki Kısa Not</label>
+                  <input value={settings.bannerNote} style={inputS} onChange={e => setSettings({ ...settings, bannerNote: e.target.value })} />
+                  <button onClick={() => syncDB(songs, settings)} style={mainBtn}>AYARLARI KAYDET</button>
                 </div>
 
                 <div style={panelBox}>
-                  <h3 style={{ color: 'orange', marginTop: 0 }}>🎵 {editId ? 'Şarkıyı Düzenle' : 'Yeni Şarkı Ekle'}</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <input placeholder="Şarkı Adı" value={form.title} style={inputS} onChange={e => setForm({ ...form, title: e.target.value })} />
-                    <input placeholder="Sanatçı" value={form.artist} style={inputS} onChange={e => setForm({ ...form, artist: e.target.value })} />
-                  </div>
-                  <input placeholder="Ses Dosyası (MP3 URL)" value={form.url} style={inputS} onChange={e => setForm({ ...form, url: e.target.value })} />
-                  <input placeholder="Kapak Resmi URL" value={form.cover} style={inputS} onChange={e => setForm({ ...form, cover: e.target.value })} />
+                  <h3 style={{ color: 'orange' }}>🎵 {editId ? 'Şarkıyı Düzenle' : 'Yeni Şarkı Ekle'}</h3>
+                  <label className="label-text">Şarkı Adı</label>
+                  <input value={form.title} style={inputS} onChange={e => setForm({ ...form, title: e.target.value })} />
+                  <label className="label-text">Sanatçı İsmi</label>
+                  <input value={form.artist} style={inputS} onChange={e => setForm({ ...form, artist: e.target.value })} />
+                  <label className="label-text">MP3 Dosya Bağlantısı (URL)</label>
+                  <input value={form.url} style={inputS} onChange={e => setForm({ ...form, url: e.target.value })} />
+                  <label className="label-text">Şarkı Kapağı Görsel URL</label>
+                  <input value={form.cover} style={inputS} onChange={e => setForm({ ...form, cover: e.target.value })} />
+                  <label className="label-text">Kategori Seçimi</label>
                   <select value={form.category} style={inputS} onChange={e => setForm({ ...form, category: e.target.value })}>
                     {categories.filter(c => c !== "Hepsi").map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  <button onClick={handleAdminAction} style={mainBtn}>{editId ? 'GÜNCELLE' : 'KÜTÜPHANEYE EKLE'}</button>
-                  {editId && <button onClick={() => { setEditId(null); setForm({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' }); }} style={{ ...mainBtn, background: '#444', marginTop: '5px' }}>İPTAL</button>}
+                  <button onClick={handleAdminAction} style={mainBtn}>{editId ? 'GÜNCELLEMEYİ KAYDET' : 'KÜTÜPHANEYE EKLE'}</button>
                 </div>
 
                 <div style={panelBox}>
-                  <h3 style={{ color: 'orange' }}>📑 Mevcut Şarkılar (Düzenle/Sil)</h3>
+                  <h3 style={{ color: 'orange' }}>⚙️ Arşiv Yönetimi</h3>
                   {songs.map(s => (
-                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #222', fontSize: '14px' }}>
-                      <span>{s.title} - <small style={{ color: '#666' }}>{s.artist}</small></span>
+                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', borderBottom: '1px solid #222' }}>
+                      <span>{s.title}</span>
                       <div>
-                        <button onClick={() => { setForm(s); setEditId(s.id); window.scrollTo(0, 0); }} style={{ color: 'cyan', background: 'none', border: 'none', cursor: 'pointer' }}>📝</button>
-                        <button onClick={async () => { if (confirm("Bu eseri silmek istediğinize emin misiniz?")) { const n = songs.filter(x => x.id !== s.id); setSongs(n); syncDB(n); } }} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer', marginLeft: '10px' }}>🗑️</button>
+                        <button onClick={() => { setForm(s); setEditId(s.id); window.scrollTo(0, 0); }} style={{ color: '#3498db', background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' }}>✏️</button>
+                        <button onClick={async () => { if (confirm("Silinsin mi?")) { const n = songs.filter(x => x.id !== s.id); setSongs(n); syncDB(n); } }} style={{ color: '#e74c3c', background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', marginLeft: '15px' }}>🗑️</button>
                       </div>
                     </div>
                   ))}
@@ -190,38 +220,35 @@ export default function App() {
                 <div key={s.id} onClick={() => setCurrentSongIndex(songs.findIndex(x => x.id === s.id))} style={{ ...sRow, border: songs[currentSongIndex]?.id === s.id ? '1px solid orange' : '1px solid transparent' }}>
                   <img src={s.cover} style={sImg} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.title}</div>
+                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{s.title}</div>
                     <div style={{ fontSize: '12px', color: '#555' }}>{s.artist}</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '11px', color: '#444', fontWeight: 'bold' }}>{s.duration}</span>
-                    <a href={s.url} download={`${s.title}.mp3`} onClick={e => e.stopPropagation()} style={actionI}>💾</a>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <span style={{ fontSize: '11px', color: '#444', fontWeight: 'bold' }}>{s.duration || '0:00'}</span>
+                    <button onClick={(e) => handleLike(e, s.id)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>❤️ {s.likes || 0}</button>
+                    <button onClick={(e) => handleDownload(e, s.url, s.title)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' }}>📥</button>
                   </div>
                 </div>
               ))}
             </div>
 
             {activeTab === "Hepsi" && !showFullArchive && songs.length > 6 && (
-              <button onClick={() => setShowFullArchive(true)} style={loadMore}>TÜM LİSTEYİ GÖR ({songs.length})</button>
+              <button onClick={() => setShowFullArchive(true)} style={loadMore}>TÜM ARŞİVİ GÖR</button>
             )}
           </div>
         )}
       </main>
 
-      {/* PLAYER (OTOMATİK GEÇİŞ SİSTEMİ) */}
+      {/* PLAYER */}
       {currentSongIndex !== null && songs[currentSongIndex] && (
         <div style={playerContainer}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-            <img src={songs[currentSongIndex].cover} style={{ width: '35px', height: '35px', borderRadius: '5px' }} />
-            <div style={{ fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{songs[currentSongIndex].title}</div>
-          </div>
           <audio 
             ref={audioRef}
             src={songs[currentSongIndex].url} 
             autoPlay 
             controls 
-            onEnded={handleNextSong}
-            style={{ flex: 3, height: '30px', filter: 'invert(1)' }} 
+            onEnded={() => currentSongIndex < songs.length - 1 && setCurrentSongIndex(currentSongIndex + 1)}
+            style={{ flex: 1, height: '32px', filter: 'invert(1)' }} 
           />
           <button onClick={() => setCurrentSongIndex(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>✕</button>
         </div>
@@ -231,21 +258,19 @@ export default function App() {
 }
 
 // STİLLER
-const navBtn = { background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '14px', fontWeight: '600', transition: '0.3s' };
-const inputS = { width: '100%', padding: '12px', marginBottom: '10px', background: '#000', border: '1px solid #222', borderRadius: '8px', color: '#fff', fontSize: '14px' };
-const mainBtn = { width: '100%', padding: '12px', background: 'orange', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', color: '#000' };
-const culturalBox = { background: '#111', padding: '25px', borderRadius: '20px', border: '1px solid #222', textAlign: 'center' as 'center', marginBottom: '20px' };
-const contactGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' };
-const cCard = { padding: '15px', borderRadius: '15px', textAlign: 'center' as 'center', color: '#fff', cursor: 'pointer', transition: '0.3s', fontSize: '13px' };
-const cIcon = { display: 'block', fontSize: '20px', marginBottom: '5px' };
-const tabs = { display: 'flex', gap: '20px', overflowX: 'auto' as 'auto', marginBottom: '20px', paddingBottom: '10px' };
-const tBtn = { background: 'none', border: 'none', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' as 'nowrap', fontSize: '13px' };
-const sRow = { background: '#111', padding: '10px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: '0.2s' };
-const sImg = { width: '45px', height: '45px', borderRadius: '8px', objectFit: 'cover' as 'cover' };
-const actionI = { fontSize: '18px', textDecoration: 'none', cursor: 'pointer' };
-const bannerWrapper = { position: 'relative' as 'relative', height: '180px', borderRadius: '20px', overflow: 'hidden', marginBottom: '20px' };
+const navLink = { background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px', fontWeight: '600' };
+const inputS = { width: '100%', padding: '12px', marginBottom: '15px', background: '#000', border: '1px solid #222', borderRadius: '8px', color: '#fff' };
+const mainBtn = { width: '100%', padding: '14px', background: 'orange', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', color: '#000' };
+const culturalBox = { background: '#0a0a0a', padding: '30px', borderRadius: '25px', border: '1px solid #111', textAlign: 'center' as 'center', marginBottom: '25px' };
+const contactGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' };
+const cCard = { background: '#111', padding: '20px', borderRadius: '15px', textAlign: 'center' as 'center', cursor: 'pointer' };
+const tabs = { display: 'flex', gap: '20px', overflowX: 'auto' as 'auto', marginBottom: '25px', paddingBottom: '10px' };
+const tBtn = { background: 'none', border: 'none', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' as 'nowrap' };
+const sRow = { background: '#111', padding: '12px', borderRadius: '15px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' };
+const sImg = { width: '45px', height: '45px', borderRadius: '10px', objectFit: 'cover' as 'cover' };
+const bannerWrapper = { position: 'relative' as 'relative', height: '200px', borderRadius: '25px', overflow: 'hidden', marginBottom: '30px', border: '1px solid #111' };
 const bannerImg = { width: '100%', height: '100%', objectFit: 'cover' as 'cover', opacity: 0.4 };
-const bannerOverlay = { position: 'absolute' as 'absolute', bottom: '20px', left: '20px', fontSize: '16px', fontWeight: 'bold', color: 'orange' };
-const playerContainer = { position: 'fixed' as 'fixed', bottom: 0, left: 0, right: 0, background: '#000', borderTop: '2px solid orange', padding: '10px 5%', display: 'flex', alignItems: 'center', gap: '15px', zIndex: 3000 };
-const loadMore = { width: '100%', padding: '12px', background: 'none', border: '1px dashed #333', color: '#555', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', marginTop: '10px' };
-const panelBox = { background: '#111', padding: '20px', borderRadius: '15px', marginBottom: '15px', border: '1px solid #222' };
+const bannerOverlay = { position: 'absolute' as 'absolute', bottom: '25px', left: '25px', fontSize: '18px', fontWeight: 'bold', color: 'orange' };
+const playerContainer = { position: 'fixed' as 'fixed', bottom: 0, left: 0, right: 0, background: '#000', borderTop: '2px solid orange', padding: '12px 5%', display: 'flex', gap: '20px', zIndex: 1000 };
+const loadMore = { width: '100%', padding: '15px', background: 'none', border: '1px dashed #333', color: '#444', borderRadius: '15px', marginTop: '15px', cursor: 'pointer' };
+const panelBox = { background: '#111', padding: '25px', borderRadius: '20px', marginBottom: '20px' };
