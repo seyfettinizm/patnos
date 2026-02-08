@@ -34,7 +34,6 @@ export default function App() {
     await supabase.from('settings').update({ value: { songs: newSongs, settings: newSettings } }).eq('id', 'app_data');
   };
 
-  // Otomatik Süre Hesaplama Fonksiyonu
   const getDuration = (url: string): Promise<string> => {
     return new Promise((resolve) => {
       const audio = new Audio();
@@ -52,7 +51,7 @@ export default function App() {
     const duration = await getDuration(form.url);
     let updated;
     if (editId) {
-      updated = songs.map(s => s.id === editId ? { ...form, id: editId, duration } : s);
+      updated = songs.map(s => s.id === editId ? { ...form, id: editId, duration, likes: s.likes || 0 } : s);
     } else {
       updated = [{ ...form, id: Date.now(), likes: 0, duration }, ...songs];
     }
@@ -76,15 +75,21 @@ export default function App() {
 
   const handleDownload = async (e: React.MouseEvent, url: string, title: string) => {
     e.stopPropagation();
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.download = `${title}.mp3`;
-    link.click();
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `${title}.mp3`;
+      link.click();
+    } catch (err) {
+      window.open(url, '_blank');
+    }
   };
 
-  const filteredSongs = activeTab === "Hepsi" ? songs : songs.filter(s => s.category === activeTab);
+  // SIRALAMA VE FİLTRELEME MANTIĞI
+  const sortedSongs = [...songs].sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  const filteredSongs = activeTab === "Hepsi" ? sortedSongs : sortedSongs.filter(s => s.category === activeTab);
   const displayedSongs = (!showFullArchive && activeTab === "Hepsi") ? filteredSongs.slice(0, 6) : filteredSongs;
 
   return (
@@ -186,7 +191,7 @@ export default function App() {
                   <h3 style={{ color: 'orange' }}>⚙️ Arşiv Yönetimi</h3>
                   {songs.map(s => (
                     <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', borderBottom: '1px solid #222' }}>
-                      <span>{s.title}</span>
+                      <span>{s.title} ({s.likes || 0} beğeni)</span>
                       <div>
                         <button onClick={() => { setForm(s); setEditId(s.id); window.scrollTo(0, 0); }} style={{ color: '#3498db', background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' }}>✏️</button>
                         <button onClick={async () => { if (confirm("Silinsin mi?")) { const n = songs.filter(x => x.id !== s.id); setSongs(n); syncDB(n); } }} style={{ color: '#e74c3c', background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', marginLeft: '15px' }}>🗑️</button>
@@ -216,8 +221,8 @@ export default function App() {
             </div>
 
             <div style={{ display: 'grid', gap: '8px' }}>
-              {displayedSongs.map((s, i) => (
-                <div key={s.id} onClick={() => setCurrentSongIndex(songs.findIndex(x => x.id === s.id))} style={{ ...sRow, border: songs[currentSongIndex]?.id === s.id ? '1px solid orange' : '1px solid transparent' }}>
+              {displayedSongs.map((s) => (
+                <div key={s.id} onClick={() => setCurrentSongIndex(sortedSongs.findIndex(x => x.id === s.id))} style={{ ...sRow, border: sortedSongs[currentSongIndex]?.id === s.id ? '1px solid orange' : '1px solid transparent' }}>
                   <img src={s.cover} style={sImg} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: '600', fontSize: '14px' }}>{s.title}</div>
@@ -240,14 +245,14 @@ export default function App() {
       </main>
 
       {/* PLAYER */}
-      {currentSongIndex !== null && songs[currentSongIndex] && (
+      {currentSongIndex !== null && sortedSongs[currentSongIndex] && (
         <div style={playerContainer}>
           <audio 
             ref={audioRef}
-            src={songs[currentSongIndex].url} 
+            src={sortedSongs[currentSongIndex].url} 
             autoPlay 
             controls 
-            onEnded={() => currentSongIndex < songs.length - 1 && setCurrentSongIndex(currentSongIndex + 1)}
+            onEnded={() => currentSongIndex < sortedSongs.length - 1 && setCurrentSongIndex(currentSongIndex + 1)}
             style={{ flex: 1, height: '32px', filter: 'invert(1)' }} 
           />
           <button onClick={() => setCurrentSongIndex(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>✕</button>
@@ -257,7 +262,7 @@ export default function App() {
   );
 }
 
-// STİLLER
+// STİLLER (Aynı kaldı)
 const navLink = { background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px', fontWeight: '600' };
 const inputS = { width: '100%', padding: '12px', marginBottom: '15px', background: '#000', border: '1px solid #222', borderRadius: '8px', color: '#fff' };
 const mainBtn = { width: '100%', padding: '14px', background: 'orange', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', color: '#000' };
