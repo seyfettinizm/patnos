@@ -15,7 +15,7 @@ export default function App() {
   const [newSong, setNewSong] = useState({ title: '', url: '' });
 
   useEffect(() => {
-    const load = async () => {
+    const loadData = async () => {
       const { data } = await supabase.from('settings').select('value').eq('id', 'app_data').single();
       if (data?.value) {
         setSongs(data.value.songs || []);
@@ -23,10 +23,10 @@ export default function App() {
         setBannerUrl(data.value.bannerUrl || "");
       }
     };
-    load();
+    loadData();
   }, []);
 
-  const saveToCloud = async (updated: any[]) => {
+  const handleSave = async (updated: any[]) => {
     await supabase.from('settings').update({ 
       value: { songs: updated, logoUrl, bannerUrl } 
     }).eq('id', 'app_data');
@@ -37,37 +37,41 @@ export default function App() {
     e.preventDefault();
     const up = [{ ...newSong, id: Date.now() }, ...songs];
     setSongs(up);
-    saveToCloud(up);
+    handleSave(up);
     setNewSong({ title: '', url: '' });
   };
 
   return (
     <div style={{ background: 'black', color: 'white', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
       <div style={{ display: 'flex', gap: '20px' }}>
-        <nav style={{ width: '120px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button onClick={() => setIsAdmin(false)} style={{ padding: '10px', cursor: 'pointer' }}>GIRIS</button>
-          <button onClick={() => setIsAdmin(true)} style={{ padding: '10px', color: 'red', cursor: 'pointer' }}>PANEL</button>
+        <nav style={{ width: '130px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button onClick={() => setIsAdmin(false)} style={{ padding: '12px', cursor: 'pointer', background: '#333', color: 'white', border: 'none', borderRadius: '5px' }}>GIRIS</button>
+          <button onClick={() => setIsAdmin(true)} style={{ padding: '12px', color: '#ff4d4d', cursor: 'pointer', background: '#333', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>PANEL</button>
         </nav>
+
         <main style={{ flex: 1 }}>
           {isAdmin ? (
-            <div style={{ maxWidth: '400px' }}>
-              <input placeholder="Logo URL" value={logoUrl} onChange={e => setLogoUrl(e.target.value)} style={{ width: '100%', marginBottom: '10px', padding: '8px' }} />
-              <input placeholder="Banner URL" value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} style={{ width: '100%', marginBottom: '10px', padding: '8px' }} />
-              <button onClick={() => saveToCloud(songs)} style={{ width: '100%', background: 'orange', padding: '10px' }}>AYARLARI KAYDET</button>
-              <form onSubmit={onAdd} style={{ marginTop: '20px', border: '1px solid #333', padding: '15px' }}>
-                <input placeholder="Sarki Adi" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} style={{ width: '100%', marginBottom: '10px', padding: '8px' }} required />
-                <input placeholder="MP3 URL" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} style={{ width: '100%', marginBottom: '10px', padding: '8px' }} required />
-                <button style={{ width: '100%', background: 'green', color: 'white', padding: '10px' }}>BULUTA EKLE</button>
+            <div style={{ maxWidth: '450px' }}>
+              <h2 style={{ color: 'orange' }}>Yönetici Paneli</h2>
+              <input placeholder="Logo Linki" value={logoUrl} onChange={e => setLogoUrl(e.target.value)} style={{ width: '100%', marginBottom: '10px', padding: '10px', background: '#111', color: 'white', border: '1px solid #444' }} />
+              <input placeholder="Banner Linki" value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} style={{ width: '100%', marginBottom: '10px', padding: '10px', background: '#111', color: 'white', border: '1px solid #444' }} />
+              <button onClick={() => handleSave(songs)} style={{ width: '100%', background: 'orange', padding: '12px', fontWeight: 'bold', border: 'none', cursor: 'pointer', borderRadius: '5px' }}>AYARLARI KAYDET</button>
+              
+              <form onSubmit={onAdd} style={{ marginTop: '30px', border: '1px solid #333', padding: '20px', borderRadius: '10px' }}>
+                <h3 style={{ color: '#4CAF50', marginTop: '0' }}>Yeni Şarkı Ekle</h3>
+                <input placeholder="Şarkı Adı" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} style={{ width: '100%', marginBottom: '10px', padding: '10px', background: '#111', color: 'white', border: '1px solid #444' }} required />
+                <input placeholder="Ses Linki (MP3)" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} style={{ width: '100%', marginBottom: '10px', padding: '10px', background: '#111', color: 'white', border: '1px solid #444' }} required />
+                <button type="submit" style={{ width: '100%', background: '#4CAF50', color: 'white', padding: '12px', border: 'none', cursor: 'pointer', borderRadius: '5px', fontWeight: 'bold' }}>LISTEYE EKLE</button>
               </form>
             </div>
           ) : (
             <div>
-              {bannerUrl && <img src={bannerUrl} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '15px' }} />}
-              <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              {bannerUrl && <img src={bannerUrl} style={{ width: '100%', height: '250px', objectFit: 'cover', borderRadius: '20px', border: '1px solid #333' }} alt="banner" />}
+              <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '15px' }}>
                 {songs.map(s => (
-                  <div key={s.id} style={{ background: '#111', padding: '15px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>{s.title}</span>
-                    <button onClick={() => setCurrentSong(s)} style={{ background: 'orange', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer' }}>▶</button>
+                  <div key={s.id} style={{ background: '#111', padding: '20px', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #222' }}>
+                    <span style={{ fontSize: '18px' }}>{s.title}</span>
+                    <button onClick={() => setCurrentSong(s)} style={{ background: 'orange', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', fontSize: '20px' }}>▶</button>
                   </div>
                 ))}
               </div>
@@ -75,11 +79,12 @@ export default function App() {
           )}
         </main>
       </div>
+
       {currentSong && (
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#222', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <b>{currentSong.title}</b>
-          <audio src={currentSong.url} autoPlay controls />
-          <button onClick={() => setCurrentSong(null)}>Kapat</button>
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0a0a0a', padding: '25px', borderTop: '3px solid orange', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)' }}>
+          <span style={{ color: 'orange', fontWeight: 'bold', fontSize: '20px' }}>{currentSong.title}</span>
+          <audio src={currentSong.url} autoPlay controls style={{ filter: 'invert(1)', width: '50%' }} />
+          <button onClick={() => setCurrentSong(null)} style={{ background: 'transparent', color: 'white', border: '1px solid #444', padding: '8px 15px', cursor: 'pointer', borderRadius: '5px' }}>Kapat</button>
         </div>
       )}
     </div>
