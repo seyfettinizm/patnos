@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { initialSongs } from './constants';
+import { initialSongs } from './constants'; 
 import Sidebar from './components/Sidebar';
 import Player from './components/Player';
 
