@@ -9,99 +9,83 @@ const supabase = createClient(
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [songs, setSongs] = useState<any[]>([]);
-  const [logoUrl, setLogoUrl] = useState("");
-  const [bannerUrl, setBannerUrl] = useState("");
   const [currentSong, setCurrentSong] = useState<any>(null);
-  const [newSong, setNewSong] = useState({ title: '', url: '' });
+  const [newSong, setNewSong] = useState({ title: '', url: '', category: 'Genel' });
 
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase.from('settings').select('value').eq('id', 'app_data').single();
-      if (data?.value) {
-        setSongs(data.value.songs || []);
-        setLogoUrl(data.value.logoUrl || "");
-        setBannerUrl(data.value.bannerUrl || "");
-      }
+      if (data?.value) setSongs(data.value.songs || []);
     };
     load();
   }, []);
 
-  const save = async (updatedSongs: any[]) => {
-    const { error } = await supabase.from('settings').update({ 
-      value: { songs: updatedSongs, logoUrl, bannerUrl } 
-    }).eq('id', 'app_data');
-    if (!error) alert("✅ Bulut Başarıyla Güncellendi!");
+  const save = async (up: any[]) => {
+    await supabase.from('settings').update({ value: { songs: up } }).eq('id', 'app_data');
   };
 
-  const onAdd = (e: React.FormEvent) => {
+  const add = (e: React.FormEvent) => {
     e.preventDefault();
     const up = [{ ...newSong, id: Date.now() }, ...songs];
     setSongs(up);
     save(up);
-    setNewSong({ title: '', url: '' });
+    setNewSong({ title: '', url: '', category: 'Genel' });
+    alert("Koleksiyona Eklendi!");
   };
 
   return (
-    <div style={{ background: '#000', color: '#fff', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
-      {/* Üst Menü */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #222', paddingBottom: '15px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          {logoUrl ? <img src={logoUrl} style={{ height: '50px', borderRadius: '50%' }} alt="Logo" /> : <div style={{width:50, height:50, background:'orange', borderRadius:'50%'}} />}
-          <h1 style={{ margin: 0, fontSize: '24px', color: 'orange' }}>Patnos Müzik Kutusu</h1>
-        </div>
-        <button onClick={() => setIsAdmin(!isAdmin)} style={{ background: '#333', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}>
-          {isAdmin ? "🏠 SİTEYE DÖN" : "⚙️ YÖNETİCİ PANELİ"}
-        </button>
-      </header>
+    <div style={{ background: '#0a0a0a', color: '#fff', minHeight: '100vh', display: 'flex', fontFamily: 'Inter, sans-serif' }}>
+      {/* SOL MENÜ */}
+      <nav style={{ width: '240px', background: '#000', padding: '30px', borderRight: '1px solid #1a1a1a', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ color: '#f39c12', fontWeight: 'bold', fontSize: '20px', marginBottom: '20px' }}>PATNOS MÜZİK</div>
+        <button onClick={() => setIsAdmin(false)} style={{ background: !isAdmin ? '#f39c12' : 'transparent', color: !isAdmin ? '#000' : '#fff', border: 'none', padding: '12px', borderRadius: '10px', textAlign: 'left', cursor: 'pointer', fontWeight: 'bold' }}>🏠 Ana Sayfa</button>
+        <button onClick={() => setIsAdmin(true)} style={{ background: isAdmin ? '#f39c12' : 'transparent', color: isAdmin ? '#000' : '#fff', border: 'none', padding: '12px', borderRadius: '10px', textAlign: 'left', cursor: 'pointer', fontWeight: 'bold' }}>⚙️ Yönetim Paneli</button>
+      </nav>
 
-      <main>
+      {/* ANA İÇERİK */}
+      <main style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
         {isAdmin ? (
-          <div style={{ maxWidth: '600px', margin: '0 auto', background: '#111', padding: '25px', borderRadius: '15px', border: '1px solid #333' }}>
-            <h2 style={{ color: 'orange', marginTop: 0 }}>🎨 Tasarım Ayarları</h2>
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{display:'block', marginBottom:5}}>Logo Resim Linki:</label>
-              <input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} style={{ width: '100%', padding: '12px', background: '#000', color: '#fff', border: '1px solid #444', borderRadius: '5px' }} placeholder="https://...png" />
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{display:'block', marginBottom:5}}>Ana Banner Resim Linki:</label>
-              <input value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} style={{ width: '100%', padding: '12px', background: '#000', color: '#fff', border: '1px solid #444', borderRadius: '5px' }} placeholder="https://...jpg" />
-            </div>
-            <button onClick={() => save(songs)} style={{ width: '100%', background: 'orange', padding: '15px', fontWeight: 'bold', cursor: 'pointer', border:'none', borderRadius:'5px', color:'#000', fontSize:'16px' }}>GÖRSELLERİ BULUTA KAYDET</button>
-
-            <hr style={{margin:'40px 0', borderColor:'#222'}} />
-
-            <h2 style={{ color: '#4CAF50', marginTop: 0 }}>🎵 Yeni Şarkı Ekle</h2>
-            <form onSubmit={onAdd}>
-              <input placeholder="Şarkı Adı" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} style={{ width: '100%', padding: '12px', marginBottom: '10px', background:'#000', color:'#fff', border:'1px solid #444' }} required />
-              <input placeholder="MP3 Dosya Linki" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} style={{ width: '100%', padding: '12px', marginBottom: '15px', background:'#000', color:'#fff', border:'1px solid #444' }} required />
-              <button style={{ width: '100%', background: '#4CAF50', color: '#fff', padding: '15px', fontWeight: 'bold', border:'none', borderRadius:'5px', cursor:'pointer' }}>LİSTEYE EKLE</button>
+          <div style={{ maxWidth: '500px' }}>
+            <h2 style={{ color: '#f39c12' }}>Yeni Eser Ekle</h2>
+            <form onSubmit={add} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <input placeholder="Eser Adı" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} style={{ padding: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#fff', borderRadius: '8px' }} required />
+              <input placeholder="Ses Linki (MP3)" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} style={{ padding: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#fff', borderRadius: '8px' }} required />
+              <select value={newSong.category} onChange={e => setNewSong({...newSong, category: e.target.value})} style={{ padding: '12px', background: '#1a1a1a', border: '1px solid #333', color: '#fff', borderRadius: '8px' }}>
+                <option>Patnos Türküleri</option>
+                <option>Dengbêjler</option>
+                <option>Sizden Gelenler</option>
+              </select>
+              <button style={{ background: '#f39c12', color: '#000', padding: '15px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>KAYDET</button>
             </form>
           </div>
         ) : (
           <div>
-            {/* Banner Alanı */}
-            {bannerUrl ? (
-              <div style={{ position: 'relative', height: '350px', borderRadius: '25px', overflow: 'hidden', marginBottom: '40px', boxShadow: '0 20px 40px rgba(0,0,0,0.6)' }}>
-                <img src={bannerUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Banner" />
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, #000)', padding: '40px 20px' }}>
-                  <h2 style={{ margin: 0, fontSize: '36px' }}>Patnos'un Sesi</h2>
-                </div>
-              </div>
-            ) : (
-              <div style={{height: 200, background: '#111', borderRadius: 25, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 30, border: '2px dashed #333'}}>
-                <span style={{color: '#555'}}>Henüz bir banner görseli eklenmedi (Panelden ekleyin)</span>
-              </div>
-            )}
+            {/* BANNER */}
+            <div style={{ background: 'linear-gradient(rgba(0,0,0,0.3), #000), url("https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad")', height: '300px', borderRadius: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px', marginBottom: '40px', backgroundSize: 'cover' }}>
+              <span style={{ background: '#f39c12', color: '#000', padding: '5px 15px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', width: 'fit-content' }}>HAFTANIN SEÇİMİ</span>
+              <h1 style={{ fontSize: '42px', margin: '15px 0' }}>Patnos'tan İzmir'e Bir Melodi...</h1>
+              <p style={{ color: '#ccc', maxWidth: '500px' }}>Köklerinizi hissedin. En sevdiğiniz Dengbêjler ve yöresel ezgiler tek bir kutuda toplandı.</p>
+            </div>
 
-            {/* Şarkı Listesi */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
-              {songs.map(s => (
-                <div key={s.id} style={{ background: '#111', padding: '25px', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #222', transition: '0.3s' }}>
-                  <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-                    <div style={{fontSize:'24px'}}>🎵</div>
-                    <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{s.title}</span>
+            {/* KOLEKSİYONLAR */}
+            <h2 style={{ marginBottom: '20px' }}>ÖZEL KOLEKSİYONLAR</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+              {[ {t:'Patnos Türküleri', c:'#3498db'}, {t:'Patnoslu Sanatçılar', c:'#9b59b6'}, {t:'Dengbêjler', c:'#e67e22'}, {t:'Sizden Gelenler', c:'#2ecc71'} ].map(item => (
+                <div key={item.t} style={{ background: item.c, height: '180px', borderRadius: '15px', padding: '20px', display: 'flex', alignItems: 'flex-end', fontWeight: 'bold', fontSize: '18px' }}>{item.t}</div>
+              ))}
+            </div>
+
+            {/* LİSTE */}
+            <h2>ŞU AN POPÜLER</h2>
+            <div style={{ background: '#111', borderRadius: '15px', padding: '10px' }}>
+              {songs.map((s, i) => (
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', padding: '15px', borderBottom: '1px solid #222', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <span style={{ color: '#555' }}>{i + 1}</span>
+                    <span style={{ fontWeight: 'bold' }}>{s.title}</span>
+                    <span style={{ color: '#f39c12', fontSize: '12px' }}>{s.category}</span>
                   </div>
-                  <button onClick={() => setCurrentSong(s)} style={{ background: 'orange', border: 'none', borderRadius: '50%', width: '50px', height: '50px', cursor: 'pointer', fontSize: '22px', display:'flex', alignItems:'center', justifyContent:'center', color:'#000' }}>▶</button>
+                  <button onClick={() => setCurrentSong(s)} style={{ background: 'transparent', color: '#f39c12', border: '1px solid #f39c12', borderRadius: '50%', width: '35px', height: '35px', cursor: 'pointer' }}>▶</button>
                 </div>
               ))}
             </div>
@@ -109,17 +93,18 @@ export default function App() {
         )}
       </main>
 
-      {/* Modern Oynatıcı Çubuğu */}
+      {/* ALT PLAYER */}
       {currentSong && (
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(15,15,15,0.95)', backdropFilter: 'blur(15px)', padding: '25px', borderTop: '3px solid orange', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 1000 }}>
-          <div style={{flex: 1}}>
-            <div style={{ color: 'orange', fontSize: '12px', fontWeight: 'bold', letterSpacing: '1px' }}>ŞİMDİ OYNATILIYOR</div>
-            <div style={{ fontSize: '22px', fontWeight: 'bold' }}>{currentSong.title}</div>
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#111', padding: '15px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '2px solid #f39c12', zIndex: 100 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ width: '50px', height: '50px', background: '#333', borderRadius: '5px' }}></div>
+            <div>
+              <div style={{ fontWeight: 'bold' }}>{currentSong.title}</div>
+              <div style={{ fontSize: '12px', color: '#777' }}>Patnos'un Sesi</div>
+            </div>
           </div>
-          <audio src={currentSong.url} autoPlay controls style={{ width: '40%', filter: 'invert(1)' }} />
-          <div style={{flex: 1, textAlign: 'right'}}>
-            <button onClick={() => setCurrentSong(null)} style={{ background: 'none', color: '#777', border: '1px solid #333', padding: '8px 20px', cursor: 'pointer', borderRadius: '20px' }}>✖ KAPAT</button>
-          </div>
+          <audio src={currentSong.url} autoPlay controls style={{ filter: 'invert(1)', width: '40%' }} />
+          <button onClick={() => setCurrentSong(null)} style={{ background: 'none', color: '#555', border: 'none', cursor: 'pointer' }}>Kapat</button>
         </div>
       )}
     </div>
