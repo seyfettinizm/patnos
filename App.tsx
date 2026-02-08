@@ -11,7 +11,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [songs, setSongs] = useState<any[]>([]);
   const [logoUrl, setLogoUrl] = useState("");
-  const [bannerUrl, setBannerUrl] = useState("https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=1200");
+  const [bannerUrl, setBannerUrl] = useState("");
   const [currentSong, setCurrentSong] = useState<any>(null);
   const [newSong, setNewSong] = useState({ title: '', url: '' });
 
@@ -31,7 +31,7 @@ export default function App() {
     const { error } = await supabase.from('settings').update({ 
       value: { songs: updatedSongs, logoUrl, bannerUrl } 
     }).eq('id', 'app_data');
-    if (!error) alert("Kaydedildi!");
+    if (!error) alert("Saved to Cloud!");
   };
 
   const onAdd = (e: React.FormEvent) => {
@@ -44,36 +44,31 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
-      <div className="flex flex-col md:flex-row gap-4">
-        <nav className="w-full md:w-48 space-y-2">
-          <button onClick={() => setIsAdmin(false)} className="w-full text-left p-3 hover:bg-zinc-800 rounded">Giriş</button>
-          <button onClick={() => setIsAdmin(true)} className="w-full text-left p-3 hover:bg-zinc-800 rounded text-red-500">Panel</button>
+      <div className="flex gap-4">
+        <nav className="w-32 space-y-2">
+          <button onClick={() => setIsAdmin(false)} className="w-full text-left p-2 hover:bg-zinc-800 rounded">Home</button>
+          <button onClick={() => setIsAdmin(true)} className="w-full text-left p-2 hover:bg-zinc-800 rounded text-red-500">Panel</button>
         </nav>
         <main className="flex-1">
           {isAdmin ? (
             <div className="max-w-md space-y-4">
-              <div className="p-4 border border-zinc-800 rounded">
-                <input placeholder="Logo URL" value={logoUrl} onChange={e => setLogoUrl(e.target.value)} className="w-full bg-zinc-900 p-2 mb-2 rounded" />
-                <input placeholder="Banner URL" value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} className="w-full bg-zinc-900 p-2 mb-2 rounded" />
-                <button onClick={() => handleSave(songs)} className="w-full bg-yellow-600 text-black p-2 rounded font-bold">Kaydet</button>
-              </div>
-              <form onSubmit={onAdd} className="p-4 border border-zinc-800 rounded">
-                <input placeholder="Şarkı Adı" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} className="w-full bg-zinc-900 p-2 mb-2 rounded" required />
-                <input placeholder="Ses URL (MP3)" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} className="w-full bg-zinc-900 p-2 mb-2 rounded" required />
-                <button className="w-full bg-green-600 p-2 rounded font-bold">Şarkı Ekle</button>
+              <input placeholder="Logo URL" value={logoUrl} onChange={e => setLogoUrl(e.target.value)} className="w-full bg-zinc-900 p-2 rounded" />
+              <input placeholder="Banner URL" value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} className="w-full bg-zinc-900 p-2 rounded" />
+              <button onClick={() => handleSave(songs)} className="w-full bg-yellow-600 text-black p-2 rounded">Save Settings</button>
+              <form onSubmit={onAdd} className="p-4 border border-zinc-800 rounded space-y-2">
+                <input placeholder="Song Name" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} className="w-full bg-zinc-900 p-2 rounded" required />
+                <input placeholder="MP3 URL" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} className="w-full bg-zinc-900 p-2 rounded" required />
+                <button className="w-full bg-green-600 p-2 rounded text-white">Add Song</button>
               </form>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="h-48 rounded-xl overflow-hidden"><img src={bannerUrl} className="w-full h-full object-cover" /></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {songs.map(s => (
-                  <div key={s.id} className="p-4 bg-zinc-900 rounded-xl flex justify-between items-center">
-                    <span>{s.title}</span>
-                    <button onClick={() => setCurrentSong(s)} className="p-2 bg-yellow-600 text-black rounded-full"><Play size={16}/></button>
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {songs.map(s => (
+                <div key={s.id} className="p-4 bg-zinc-900 rounded-xl flex justify-between items-center border border-white/5">
+                  <span>{s.title}</span>
+                  <button onClick={() => setCurrentSong(s)} className="p-2 bg-yellow-600 text-black rounded-full"><Play size={16}/></button>
+                </div>
+              ))}
             </div>
           )}
         </main>
