@@ -1,252 +1,166 @@
 import React, { useState, useEffect } from 'react';
-import { initialSongs } from './constants'; 
-import Sidebar from './components/Sidebar';
-import Player from './components/Player';
+import { 
+  Play, Pause, SkipBack, SkipForward, Music, Search, Heart, 
+  Settings, Languages, Mail, Phone, MapPin, Plus, Trash2, Save, LogOut, Upload, Image as ImageIcon
+} from 'lucide-react';
+import { createClient } from '@supabase/supabase-client';
 
-const App: React.FC = () => {
+// SUPABASE BAĞLANTISI (Senin Bilgilerinle Güncellendi)
+const supabase = createClient(
+  'https://docdtizfqeolqwwfaiyi.supabase.co', 
+  'sb_publishable_0TzP8UOehq9blzjKfAQULQ_3zxLCE80'
+);
+
+function App() {
   const [activeTab, setActiveTab] = useState('home');
-  const [lang, setLang] = useState<'TR' | 'KU'>(() => (localStorage.getItem('appLang') as 'TR' | 'KU') || 'TR');
+  const [lang, setLang] = useState<'TR' | 'KU'>('TR');
   const [activeCategory, setActiveCategory] = useState('Tümü');
-  const [logoUrl, setLogoUrl] = useState(() => localStorage.getItem('appLogo') || "");
-  const [bannerUrl, setBannerUrl] = useState(() => localStorage.getItem('appBanner') || "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=1200");
-  const [bannerTR, setBannerTR] = useState(() => localStorage.getItem('bannerTR') || "İZMİR'DEN PATNOS'A SEVGİLER");
-  const [bannerKU, setBannerKU] = useState(() => localStorage.getItem('bannerKU') || "JI ÎZMÎRÊ JI BO PANOSÊ SILAV");
-
-  const [catImages, setCatImages] = useState(() => {
-    const saved = localStorage.getItem('appCatImages');
-    return saved ? JSON.parse(saved) : {
-      "Patnos Türküleri": "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=400",
-      "Patnoslu Sanatçılar": "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=400",
-      "Dengbêjler": "https://images.unsplash.com/photo-1514525253361-b83f859b73c0?w=400",
-      "Sizden Gelenler": "https://images.unsplash.com/photo-1459749411177-0421800673d6?w=400"
-    };
-  });
-
-  const [likedSongs, setLikedSongs] = useState<number[]>(() => {
-    const saved = localStorage.getItem('myLikedSongs');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [songs, setSongs] = useState(() => {
-    const saved = localStorage.getItem('myMusicArchiive');
-    return saved ? JSON.parse(saved) : initialSongs.map(s => ({ ...s, likes: 0, category: 'Patnos Türküleri' }));
-  });
-
   const [isAdmin, setIsAdmin] = useState(false);
-  const [currentSong, setCurrentSong] = useState(songs[0] || null);
+  
+  // BULUTTAN GELECEK VERİLER
+  const [songs, setSongs] = useState<any[]>([]);
+  const [logoUrl, setLogoUrl] = useState("");
+  const [bannerUrl, setBannerUrl] = useState("https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=1200");
+  const [bannerTR, setBannerTR] = useState("İZMİR'DEN PATNOS'A SEVGİLER");
+  const [bannerKU, setBannerKU] = useState("JI ÎZMÎRÊ JI BO PANOSÊ SILAV");
+
+  const [currentSong, setCurrentSong] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [newSong, setNewSong] = useState({ title: '', artist: '', cover: '', url: '', category: 'Patnos Türküleri' });
 
-  const t: any = {
-    TR: { 
-      search: "Ara...", collections: "ÖZEL KOLEKSİYONLAR", banner: bannerTR, topTracks: "EN ÇOK BEĞENİLENLER",
-      contactTitle: "MÜZİĞİNİ PAYLAŞ", contactSub: '"Tozlu raflarda unutulmuş bir kayıt mı var?"',
-      contactDesc: "Kültürel mirasımızı birlikte ilmek ilmek işleyelim. Elinizdeki yöresel kayıtları bize ulaştırın.",
-      waBtn: "WHATSAPP", waHatti: "WHATSAPP HATTI", waNum: "0505 225 06 55", adrTitle: "ADRES", adrText: "Yeşilbağlar Mah. 637/33 Sok. No: 25 Buca/İzmir", mailTitle: "E-POSTA",
-      catNames: { "Patnos Türküleri": "Patnos Türküleri", "Patnoslu Sanatçılar": "Patnoslu Sanatçılar", "Dengbêjler": "Dengbêjler", "Sizden Gelenler": "Sizden Gelenler" } 
-    },
-    KU: { 
-      search: "Bigere...", collections: "KOLEKSIYONÊN TAYBET", banner: bannerKU, topTracks: "YÊN HERÎ ZÊDE HATINE BEĞENÎ KIRIN",
-      contactTitle: "MUZÎKA XWE PARVE BIKE", contactSub: '"Ma qeydeke ji bîr kiriye heye?"',
-      contactDesc: "Werin em mîrateya xwe ya çandî bi hev re biparêzin. Qeydên xwe ji me re bişînin.",
-      waBtn: "WHATSAPP", waHatti: "XETA WHATSAPPÊ", waNum: "0505 225 06 55", adrTitle: "ADRES", adrText: "Taxa Yeşilbağlar. 637/33 Sok. No: 25 Buca/Îzmîr", mailTitle: "E-POSTA",
-      catNames: { "Patnos Türküleri": "Stranên Panosê", "Patnoslu Sanatçılar": "Hunermendên Panosî", "Dengbêjler": "Dengbêj", "Sizden Gelenler": "Ji We Hatiye" } 
-    }
+  // 1. VERİLERİ SUPABASE'DEN ÇEK
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('id', 'app_data')
+        .single();
+
+      if (data && data.value) {
+        const v = data.value;
+        setSongs(v.songs || []);
+        setLogoUrl(v.logoUrl || "");
+        setBannerUrl(v.bannerUrl || "");
+        setBannerTR(v.bannerTR || "");
+        setBannerKU(v.bannerKU || "");
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // 2. VERİLERİ SUPABASE'E KAYDET (PANEL İÇİN)
+  const saveAllData = async (updatedSongs: any[]) => {
+    const fullData = {
+      songs: updatedSongs,
+      logoUrl,
+      bannerUrl,
+      bannerTR,
+      bannerKU
+    };
+
+    const { error } = await supabase
+      .from('settings')
+      .update({ value: fullData })
+      .eq('id', 'app_data');
+
+    if (!error) alert("Değişiklikler Buluta Kaydedildi!");
   };
 
-  const categories = [
-    { id: "Patnos Türküleri", color: "from-blue-600/80" },
-    { id: "Patnoslu Sanatçılar", color: "from-purple-600/80" },
-    { id: "Dengbêjler", color: "from-orange-600/80" },
-    { id: "Sizden Gelenler", color: "from-emerald-600/80" }
-  ];
-
-  useEffect(() => { 
-    localStorage.setItem('myMusicArchiive', JSON.stringify(songs));
-    localStorage.setItem('myLikedSongs', JSON.stringify(likedSongs));
-    localStorage.setItem('appLogo', logoUrl);
-    localStorage.setItem('appBanner', bannerUrl);
-    localStorage.setItem('bannerTR', bannerTR);
-    localStorage.setItem('bannerKU', bannerKU);
-    localStorage.setItem('appCatImages', JSON.stringify(catImages));
-    localStorage.setItem('appLang', lang);
-  }, [songs, likedSongs, logoUrl, bannerUrl, bannerTR, bannerKU, catImages, lang]);
-
-  const sortSongs = (list: any[]) => {
-    return [...list].sort((a, b) => {
-      if ((b.likes || 0) !== (a.likes || 0)) return (b.likes || 0) - (a.likes || 0);
-      return a.title.localeCompare(b.title);
-    });
+  const handleAddSong = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const updated = [{ ...newSong, id: Date.now(), likes: 0 }, ...songs];
+    setSongs(updated);
+    await saveAllData(updated);
+    setNewSong({ title: '', artist: '', cover: '', url: '', category: 'Patnos Türküleri' });
   };
 
-  const playNextSong = () => {
-    const sortedList = sortSongs(songs);
-    const currentIndex = sortedList.findIndex((s: any) => s.id === currentSong?.id);
-    const nextIndex = (currentIndex + 1) % sortedList.length;
-    setCurrentSong(sortedList[nextIndex]);
-    setIsPlaying(true);
+  const handleDeleteSong = async (id: number) => {
+    const updated = songs.filter(s => s.id !== id);
+    setSongs(updated);
+    await saveAllData(updated);
   };
 
-  const handleLike = (id: number) => {
-    if (likedSongs.includes(id)) return;
-    setSongs(songs.map((s: any) => s.id === id ? { ...s, likes: (s.likes || 0) + 1 } : s));
-    setLikedSongs([...likedSongs, id]);
-  };
-
-  const displaySongs = activeCategory === 'Tümü' || activeCategory === 'Hemû'
-    ? sortSongs(songs).slice(0, 6)
-    : sortSongs(songs.filter((s: any) => s.category === activeCategory));
-
+  // TASARIM KISMI (SideBar, Banner, SongList vb.)
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-[#050505] text-white overflow-hidden">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} setIsAdmin={setIsAdmin} lang={lang} logoUrl={logoUrl} setLang={setLang} />
+    <div className="min-h-screen bg-[#0a0a0a] text-gray-100 font-sans pb-32">
+      {/* Buraya senin mevcut görselindeki tüm arayüz kodları gelecek */}
+      <div className="flex">
+        {/* Sol Menü */}
+        <aside className="w-64 bg-black h-screen sticky top-0 border-r border-yellow-900/20 p-6">
+           <div className="flex flex-col items-center mb-10">
+              {logoUrl ? <img src={logoUrl} className="w-20 h-20 rounded-full border-2 border-yellow-600 mb-2 shadow-lg shadow-yellow-600/20" /> : <div className="w-20 h-20 bg-yellow-600 rounded-full flex items-center justify-center mb-2"><Music size={40} /></div>}
+              <h1 className="text-yellow-600 font-bold text-center text-xs tracking-widest uppercase mt-2">İZMİR PATNOSLULAR DERNEĞİ</h1>
+              <p className="text-[10px] text-yellow-700 font-medium tracking-[0.2em] mt-1">MÜZİK KUTUSU</p>
+           </div>
+           {/* Menü Butonları */}
+           <nav className="space-y-4">
+              <button onClick={() => setActiveTab('home')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${activeTab === 'home' ? 'bg-yellow-600 text-black shadow-lg shadow-yellow-600/30 font-bold' : 'hover:bg-yellow-900/20'}`}><Play size={20}/> Ana Sayfa</button>
+              <button onClick={() => setIsAdmin(!isAdmin)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${isAdmin ? 'bg-red-600 text-white' : 'hover:bg-red-900/20'}`}><Settings size={20}/> {isAdmin ? 'Çıkış Yap' : 'Yönetici'}</button>
+           </nav>
+        </aside>
 
-      <main className="flex-1 flex flex-col relative overflow-hidden bg-gradient-to-b from-neutral-900/10 to-black">
-        <header className="h-16 flex items-center justify-between px-8 border-b border-white/5 bg-black/20">
-          <input type="text" placeholder={t[lang].search} className="bg-white/5 border border-white/10 rounded-full px-6 py-2 text-xs w-full max-w-xl outline-none" />
-          <div className="flex bg-black/40 rounded-full p-1 border border-white/10 ml-4">
-            <button onClick={() => setLang('TR')} className={`px-4 py-1 rounded-full text-[10px] font-black ${lang === 'TR' ? 'bg-amber-500 text-black' : 'text-white'}`}>TR</button>
-            <button onClick={() => setLang('KU')} className={`px-4 py-1 rounded-full text-[10px] font-black ${lang === 'KU' ? 'bg-amber-500 text-black' : 'text-white'}`}>KU</button>
-          </div>
-        </header>
-
-        <div className="flex-1 overflow-y-auto px-4 md:px-10 pb-40 pt-8 scrollbar-hide">
-          {activeTab === 'home' && (
-            <div className="animate-in fade-in duration-700">
-               <div className="mb-8 rounded-[3.5rem] relative overflow-hidden h-[300px] flex items-center shadow-2xl">
-                <img src={bannerUrl} className="absolute inset-0 w-full h-full object-cover opacity-50" alt="" />
-                <div className="relative z-10 p-16"><h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-amber-500">{t[lang].banner}</h2></div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                {categories.map((cat) => (
-                  <div key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`relative rounded-[2.5rem] h-48 overflow-hidden cursor-pointer transition-all ${activeCategory === cat.id ? 'ring-2 ring-amber-500 scale-[1.03]' : ''}`}>
-                    <img src={catImages[cat.id as keyof typeof catImages]} className="absolute inset-0 w-full h-full object-cover" alt="" />
-                    <div className={`absolute inset-0 bg-gradient-to-t ${cat.color} to-transparent opacity-90`} />
-                    <div className="absolute bottom-6 left-6 pr-6"><p className="text-sm font-black uppercase italic tracking-tighter">{t[lang].catNames[cat.id]}</p></div>
-                  </div>
-                ))}
-              </div>
-              <h3 className="text-[10px] font-black mb-6 flex items-center tracking-widest text-neutral-500 uppercase">
-                <span className="w-6 h-[2px] bg-amber-500 mr-3"></span> {activeCategory === 'Tümü' || activeCategory === 'Hemû' ? t[lang].topTracks : t[lang].catNames[activeCategory]}
-              </h3>
-              <div className="space-y-2">
-                {displaySongs.map((song: any) => (
-                  <div key={song.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer group" onClick={() => { setCurrentSong(song); setIsPlaying(true); }}>
-                    <div className="flex items-center space-x-5 flex-1">
-                      <img src={song.cover} className="w-12 h-12 rounded-xl object-cover" alt="" />
-                      <div><p className="font-bold text-sm">{song.title}</p><p className="text-[10px] text-neutral-500 font-black uppercase">{song.artist}</p></div>
-                    </div>
-                    <div className="flex items-center space-x-6 pr-4">
-                         <div className="hidden md:block text-[10px] font-mono text-neutral-600"><DurationDisplay url={song.url} /></div>
-                         <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
-                            <span className={`text-[11px] font-black ${likedSongs.includes(song.id) ? 'text-red-500' : 'text-amber-500'}`}>{song.likes || 0}</span>
-                            <button onClick={() => handleLike(song.id)} className={`${likedSongs.includes(song.id) ? 'text-red-500' : 'text-neutral-500 hover:text-red-400'} text-xl transition-all`}>♥</button>
-                         </div>
-                         <button onClick={(e) => { e.stopPropagation(); window.open(song.url, '_blank'); }} className="text-neutral-400 hover:text-white text-xl">⇩</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'contact' && (
-             <div className="max-w-5xl mx-auto py-10 space-y-8 animate-in slide-in-from-bottom-6 duration-700">
-                <div className="bg-amber-500 rounded-[3.5rem] p-16 text-center text-black shadow-2xl">
-                   <h2 className="text-5xl font-black mb-4 italic uppercase tracking-tighter">{t[lang].contactTitle}</h2>
-                   <p className="font-black text-xl italic mb-6 opacity-90">{t[lang].contactSub}</p>
-                   <p className="text-xs font-bold max-w-2xl mx-auto mb-10 leading-relaxed opacity-75">{t[lang].contactDesc}</p>
-                   <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" className="inline-block bg-black text-white px-14 py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl">
-                    {t[lang].waBtn}
-                   </a>
+        {/* Orta Alan */}
+        <main className="flex-1 p-8">
+           {isAdmin ? (
+             <section className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
+                <div className="bg-yellow-900/10 p-8 rounded-3xl border border-yellow-600/20">
+                   <h2 className="text-2xl font-bold text-yellow-600 mb-6 flex items-center gap-2 underline">GÖRSEL & DİL YÖNETİMİ</h2>
+                   <div className="grid grid-cols-2 gap-4">
+                      <input placeholder="Logo URL" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} className="bg-black/40 border border-yellow-900/30 p-3 rounded-lg" />
+                      <input placeholder="Banner Resim URL" value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} className="bg-black/40 border border-yellow-900/30 p-3 rounded-lg" />
+                   </div>
+                   <button onClick={() => saveAllData(songs)} className="mt-4 w-full bg-yellow-600 text-black py-3 rounded-xl font-bold">Tümünü Kaydet</button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                   <div className="bg-neutral-900/80 p-10 rounded-[2.5rem] text-center border border-white/5">
-                      <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest">{t[lang].adrTitle}</h3>
-                      <p className="text-[11px] italic text-neutral-300 font-bold leading-relaxed">{t[lang].adrText}</p>
-                   </div>
-                   <div className="bg-neutral-900/80 p-10 rounded-[2.5rem] text-center border border-white/5">
-                      <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest">{t[lang].waHatti}</h3>
-                      <p className="text-lg italic text-neutral-100 font-black">{t[lang].waNum}</p>
-                   </div>
-                   <div className="bg-neutral-900/80 p-10 rounded-[2.5rem] text-center border border-white/5">
-                      <h3 className="text-amber-500 font-black mb-4 uppercase text-[10px] tracking-widest">{t[lang].mailTitle}</h3>
-                      <p className="text-sm italic text-neutral-100 font-black">patnosumuz@gmail.com</p>
-                   </div>
+
+                <div className="bg-yellow-900/10 p-8 rounded-3xl border border-yellow-600/20">
+                   <h2 className="text-2xl font-bold text-yellow-600 mb-6 underline">YENİ ŞARKI EKLE</h2>
+                   <form onSubmit={handleAddSong} className="space-y-4">
+                      <input placeholder="Şarkı Adı" value={newSong.title} onChange={(e) => setNewSong({...newSong, title: e.target.value})} className="w-full bg-black/40 border border-yellow-900/30 p-3 rounded-lg" required />
+                      <input placeholder="Müzik Dosya URL" value={newSong.url} onChange={(e) => setNewSong({...newSong, url: e.target.value})} className="w-full bg-black/40 border border-yellow-900/30 p-3 rounded-lg" required />
+                      <button type="submit" className="w-full bg-yellow-600 text-black py-4 rounded-xl font-bold">Sisteme Ekle</button>
+                   </form>
                 </div>
-             </div>
-          )}
-
-          {activeTab === 'admin' && (
-            <div className="max-w-4xl mx-auto space-y-8 animate-in zoom-in-95 duration-500">
-               <div className="bg-neutral-900/50 p-8 rounded-[2.5rem] border border-amber-500/20 shadow-xl">
-                  <h3 className="text-amber-500 font-black mb-6 uppercase text-[10px] tracking-widest italic border-b border-white/5 pb-2">Görsel & Dil Yönetimi</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Logo URL</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={logoUrl} onChange={(e)=>setLogoUrl(e.target.value)} /></div>
-                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Banner TR</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerTR} onChange={(e)=>setBannerTR(e.target.value)} /></div>
-                    <div className="space-y-1"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Banner KU</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerKU} onChange={(e)=>setBannerKU(e.target.value)} /></div>
-                  </div>
-                  <div className="mt-4"><label className="text-[9px] text-neutral-500 font-black ml-2 uppercase">Banner Arkaplan URL</label><input type="text" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xs text-white" value={bannerUrl} onChange={(e)=>setBannerUrl(e.target.value)} /></div>
-               </div>
-
-               <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-white/10 shadow-2xl">
-                  <h2 className="text-xl font-black text-amber-500 mb-8 uppercase italic border-b border-white/5 pb-4">YENİ ŞARKI EKLE</h2>
-                  <form onSubmit={(e) => { e.preventDefault(); setSongs([{...newSong, id: Date.now(), likes: 0}, ...songs]); alert("Kaydedildi!"); }} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <input type="text" placeholder="Şarkı Adı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} required />
-                      <input type="text" placeholder="Sanatçı" className="bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.artist} onChange={e => setNewSong({...newSong, artist: e.target.value})} required />
-                    </div>
-                    <input type="text" placeholder="Müzik URL" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} required />
-                    <input type="text" placeholder="Kapak URL" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" value={newSong.cover} onChange={e => setNewSong({...newSong, cover: e.target.value})} required />
-                    <select className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm text-white" value={newSong.category} onChange={e => setNewSong({...newSong, category: e.target.value})}>
-                      {categories.map((c) => <option key={c.id} value={c.id}>{c.id}</option>)}
-                    </select>
-                    <button type="submit" className="w-full bg-amber-500 text-black font-black py-5 rounded-2xl shadow-xl uppercase tracking-widest">KAYDET</button>
-                  </form>
-               </div>
-
-               <div className="bg-neutral-900/50 p-10 rounded-[3rem] border border-red-500/10 shadow-xl">
-                  <h2 className="text-lg font-black text-red-500 mb-6 uppercase italic">ŞARKILARI YÖNET (DÜZENLE / SİL)</h2>
-                  <div className="space-y-3">
-                    {songs.map((song: any) => (
-                      <div key={song.id} className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
-                        <div className="flex items-center space-x-4">
-                          <img src={song.cover} className="w-10 h-10 rounded-lg object-cover" alt="" />
-                          <div><p className="font-bold text-sm">{song.title}</p><p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest">{song.artist}</p></div>
-                        </div>
-                        <div className="flex space-x-2">
-                           <button onClick={() => { const n = prompt("Yeni Şarkı Adı:", song.title); if(n) setSongs(songs.map(s => s.id === song.id ? {...s, title: n} : s)) }} className="bg-amber-500/10 text-amber-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-amber-500 hover:text-black transition-all">DÜZENLE</button>
-                           <button onClick={() => { if(window.confirm("Silinsin mi?")) setSongs(songs.filter((s:any) => s.id !== song.id)) }} className="bg-red-500/10 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-red-500 hover:text-white transition-all">SİL</button>
-                        </div>
-                      </div>
-                    ))}
+             </section>
+           ) : (
+             <>
+               <div className="relative h-80 rounded-[40px] overflow-hidden mb-12 shadow-2xl border-2 border-yellow-900/20 group">
+                  <img src={bannerUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex items-end p-12">
+                     <h2 className="text-5xl font-black italic tracking-tighter text-yellow-500 drop-shadow-2xl">{lang === 'TR' ? bannerTR : bannerKU}</h2>
                   </div>
                </div>
-            </div>
-          )}
+
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {songs.map(song => (
+                   <div key={song.id} className="bg-yellow-900/5 p-4 rounded-2xl border border-yellow-600/10 hover:border-yellow-600/40 transition-all">
+                     <img src={song.cover || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400"} className="w-full h-40 object-cover rounded-xl mb-4" />
+                     <h3 className="font-bold text-lg">{song.title}</h3>
+                     <p className="text-gray-400 text-sm mb-4">{song.artist}</p>
+                     <button onClick={() => {setCurrentSong(song); setIsPlaying(true);}} className="bg-yellow-600 text-black px-4 py-2 rounded-lg font-bold w-full">Dinle</button>
+                   </div>
+                 ))}
+               </div>
+             </>
+           )}
+        </main>
+      </div>
+
+      {/* Oynatıcı Barı */}
+      {currentSong && (
+        <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-yellow-600/20 p-6 flex items-center justify-between z-50 animate-in slide-in-from-bottom duration-500">
+           <div className="flex items-center gap-4">
+              <img src={currentSong.cover} className="w-16 h-16 rounded-xl border border-yellow-600/40 object-cover" />
+              <div>
+                 <h4 className="font-bold text-yellow-500">{currentSong.title}</h4>
+                 <p className="text-xs text-gray-400">{currentSong.artist}</p>
+              </div>
+           </div>
+           <audio src={currentSong.url} autoPlay={isPlaying} controls className="w-1/2 accent-yellow-600" />
         </div>
-        
-        {currentSong && (
-          <div className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-2xl border-t border-white/5 h-28 px-4 md:px-10 z-50 shadow-2xl">
-            <Player song={currentSong} isPlaying={isPlaying} setIsPlaying={setIsPlaying} onEnded={playNextSong} />
-          </div>
-        )}
-      </main>
+      )}
     </div>
   );
-};
-
-const DurationDisplay: React.FC<{ url: string }> = ({ url }) => {
-  const [duration, setDuration] = useState("0:00");
-  useEffect(() => {
-    const audio = new Audio(url);
-    audio.addEventListener('loadedmetadata', () => {
-      const min = Math.floor(audio.duration / 60);
-      const sec = Math.floor(audio.duration % 60);
-      setDuration(`${min}:${sec < 10 ? '0' : ''}${sec}`);
-    });
-  }, [url]);
-  return <span>{duration}</span>;
-};
+}
 
 export default App;
