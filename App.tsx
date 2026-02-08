@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Music, Settings, LogOut } from 'lucide-react';
 import { createClient } from '@supabase/supabase-client';
 
 const supabase = createClient(
@@ -16,7 +15,7 @@ export default function App() {
   const [newSong, setNewSong] = useState({ title: '', url: '' });
 
   useEffect(() => {
-    const loadData = async () => {
+    const load = async () => {
       const { data } = await supabase.from('settings').select('value').eq('id', 'app_data').single();
       if (data?.value) {
         setSongs(data.value.songs || []);
@@ -24,60 +23,64 @@ export default function App() {
         setBannerUrl(data.value.bannerUrl || "");
       }
     };
-    loadData();
+    load();
   }, []);
 
-  const handleSave = async (updatedSongs: any[]) => {
-    const { error } = await supabase.from('settings').update({ 
-      value: { songs: updatedSongs, logoUrl, bannerUrl } 
+  const save = async (updated: any[]) => {
+    await supabase.from('settings').update({ 
+      value: { songs: updated, logoUrl, bannerUrl } 
     }).eq('id', 'app_data');
-    if (!error) alert("Saved to Cloud!");
+    alert("Buluta Kaydedildi!");
   };
 
-  const onAdd = (e: React.FormEvent) => {
+  const add = (e: React.FormEvent) => {
     e.preventDefault();
-    const updated = [{ ...newSong, id: Date.now() }, ...songs];
-    setSongs(updated);
-    handleSave(updated);
+    const up = [{ ...newSong, id: Date.now() }, ...songs];
+    setSongs(up);
+    save(up);
     setNewSong({ title: '', url: '' });
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="flex gap-4">
-        <nav className="w-32 space-y-2">
-          <button onClick={() => setIsAdmin(false)} className="w-full text-left p-2 hover:bg-zinc-800 rounded">Home</button>
-          <button onClick={() => setIsAdmin(true)} className="w-full text-left p-2 hover:bg-zinc-800 rounded text-red-500">Panel</button>
+    <div style={{ background: 'black', color: 'white', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
+      <div style={{ display: 'flex', gap: '20px' }}>
+        <nav style={{ width: '150px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button onClick={() => setIsAdmin(false)} style={{ padding: '10px', cursor: 'pointer' }}>ANA SAYFA</button>
+          <button onClick={() => setIsAdmin(true)} style={{ padding: '10px', color: 'red', cursor: 'pointer' }}>PANEL</button>
         </nav>
-        <main className="flex-1">
+
+        <main style={{ flex: 1 }}>
           {isAdmin ? (
-            <div className="max-w-md space-y-4">
-              <input placeholder="Logo URL" value={logoUrl} onChange={e => setLogoUrl(e.target.value)} className="w-full bg-zinc-900 p-2 rounded" />
-              <input placeholder="Banner URL" value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} className="w-full bg-zinc-900 p-2 rounded" />
-              <button onClick={() => handleSave(songs)} className="w-full bg-yellow-600 text-black p-2 rounded">Save Settings</button>
-              <form onSubmit={onAdd} className="p-4 border border-zinc-800 rounded space-y-2">
-                <input placeholder="Song Name" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} className="w-full bg-zinc-900 p-2 rounded" required />
-                <input placeholder="MP3 URL" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} className="w-full bg-zinc-900 p-2 rounded" required />
-                <button className="w-full bg-green-600 p-2 rounded text-white">Add Song</button>
+            <div style={{ maxWidth: '400px' }}>
+              <input placeholder="Logo URL" value={logoUrl} onChange={e => setLogoUrl(e.target.value)} style={{ width: '100%', marginBottom: '10px', padding: '8px' }} />
+              <input placeholder="Banner URL" value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} style={{ width: '100%', marginBottom: '10px', padding: '8px' }} />
+              <button onClick={() => save(songs)} style={{ width: '100%', background: 'orange', padding: '10px', fontWeight: 'bold' }}>AYARLARI KAYDET</button>
+              <form onSubmit={add} style={{ marginTop: '20px', border: '1px solid #333', padding: '15px' }}>
+                <input placeholder="Sarki Adi" value={newSong.title} onChange={e => setNewSong({...newSong, title: e.target.value})} style={{ width: '100%', marginBottom: '10px', padding: '8px' }} required />
+                <input placeholder="MP3 URL" value={newSong.url} onChange={e => setNewSong({...newSong, url: e.target.value})} style={{ width: '100%', marginBottom: '10px', padding: '8px' }} required />
+                <button style={{ width: '100%', background: 'green', color: 'white', padding: '10px' }}>SARKIYI EKLE</button>
               </form>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {songs.map(s => (
-                <div key={s.id} className="p-4 bg-zinc-900 rounded-xl flex justify-between items-center border border-white/5">
-                  <span>{s.title}</span>
-                  <button onClick={() => setCurrentSong(s)} className="p-2 bg-yellow-600 text-black rounded-full"><Play size={16}/></button>
-                </div>
-              ))}
+            <div>
+              {bannerUrl && <img src={bannerUrl} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '15px' }} />}
+              <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {songs.map(s => (
+                  <div key={s.id} style={{ background: '#111', padding: '15px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{s.title}</span>
+                    <button onClick={() => setCurrentSong(s)} style={{ background: 'orange', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer' }}>▶</button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </main>
       </div>
       {currentSong && (
-        <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 p-4 flex items-center justify-between border-t border-zinc-800">
-          <span className="text-yellow-500 font-bold">{currentSong.title}</span>
-          <audio src={currentSong.url} autoPlay controls className="invert" />
-          <button onClick={() => setCurrentSong(null)}><LogOut/></button>
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#222', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <b>{currentSong.title}</b>
+          <audio src={currentSong.url} autoPlay controls />
+          <button onClick={() => setCurrentSong(null)}>Kapat</button>
         </div>
       )}
     </div>
