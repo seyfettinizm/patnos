@@ -37,7 +37,7 @@ export default function App() {
     setConfig(newConfig);
   };
 
-  // --- 🛡️ ASLA DEĞİŞMEYEN YÖNETİM PANELİ FONKSİYONLARI ---
+  // --- 🛡️ KORUNAN YÖNETİM PANELİ FONKSİYONLARI ---
   const getDuration = (url: string): Promise<string> => {
     return new Promise((resolve) => {
       const audio = new Audio(); audio.src = url;
@@ -64,21 +64,32 @@ export default function App() {
     alert("Kayıt Başarılı!");
   };
 
-  // --- 🏠 ANA SAYFA FONKSİYONLARI ---
+  // --- 🏠 OTOMATİK GEÇİŞ DÜZELTMESİ (GÜNCELLENDİ) ---
   const playSong = (song: any) => {
     if (currentSong?.id === song.id) {
       if (isPlaying) audioRef.current?.pause(); else audioRef.current?.play();
       setIsPlaying(!isPlaying);
     } else {
-      setCurrentSong(song); setIsPlaying(true);
-      setTimeout(() => { if (audioRef.current) { audioRef.current.src = song.url; audioRef.current.play(); } }, 100);
+      setCurrentSong(song);
+      setIsPlaying(true);
+      if (audioRef.current) {
+        audioRef.current.src = song.url;
+        audioRef.current.play();
+      }
     }
   };
 
-  const nextSong = () => {
-    const currentIndex = songs.findIndex(s => s.id === currentSong?.id);
-    if (currentIndex !== -1 && currentIndex < songs.length - 1) {
-      playSong(songs[currentIndex + 1]);
+  const handleNextSong = () => {
+    // Mevcut filtreye göre listeyi alıyoruz
+    const currentList = songs
+      .filter(s => (activeTab === "Hepsi" || s.category === activeTab))
+      .sort((a,b) => (b.likes || 0) - (a.likes || 0));
+    
+    const currentIndex = currentList.findIndex(s => s.id === currentSong?.id);
+    if (currentIndex !== -1 && currentIndex < currentList.length - 1) {
+      playSong(currentList[currentIndex + 1]);
+    } else {
+      setIsPlaying(false);
     }
   };
 
@@ -91,9 +102,7 @@ export default function App() {
       link.href = window.URL.createObjectURL(blob);
       link.download = `${title}.mp3`;
       link.click();
-    } catch (err) {
-      window.open(url, '_blank');
-    }
+    } catch (err) { window.open(url, '_blank'); }
   };
 
   const categories = ["Hepsi", "Patnoslu Sanatçılar", "Dengbêjler", "Patnos Türküleri", "Sizden Gelenler"];
@@ -123,7 +132,7 @@ export default function App() {
       <main style={{ maxWidth: '600px', margin: 'auto', padding: '0 15px' }}>
         
         {view === 'admin' ? (
-          /* 🛡️ YÖNETİM PANELİ (MİLİMETRİK KORUNMUŞ) */
+          /* 🛡️ YÖNETİM PANELİ (MÜDAHALE EDİLMEDİ) */
           <div style={{ background: '#111', padding: '25px', borderRadius: '20px', border: '1px solid #222' }}>
             {!isAuth ? (
               <input type="password" placeholder="Şifre..." style={inputS} onKeyDown={e => e.key === 'Enter' && (e.currentTarget.value === "Mihriban04" ? setIsAuth(true) : alert("Hatalı!"))} />
@@ -160,7 +169,7 @@ export default function App() {
             )}
           </div>
         ) : view === 'contact' ? (
-          /* 🛡️ İLETİŞİM BÖLÜMÜ (KORUNMUŞ) */
+          /* 🛡️ İLETİŞİM BÖLÜMÜ (MÜDAHALE EDİLMEDİ) */
           <div style={{ animation: 'fadeIn 0.5s' }}>
             <div style={{ background: '#111', padding: '30px', borderRadius: '25px', border: '1px solid orange', textAlign: 'center', marginBottom: '20px' }}>
               <h3 style={{ color: 'orange', margin: '0 0 10px 0' }}>Bize Katılın!</h3>
@@ -172,7 +181,7 @@ export default function App() {
             <button onClick={() => setView('home')} style={{ ...saveBtnS, marginTop: '20px', background: '#222', color: '#fff' }}>GERİ DÖN</button>
           </div>
         ) : (
-          /* 🏠 ANA SAYFA (YENİLENDİ) */
+          /* 🏠 ANA SAYFA */
           <div>
              {config.banner && <div style={{ width: '100%', height: '170px', borderRadius: '18px', overflow: 'hidden', marginBottom: '20px' }}><img src={config.banner} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
@@ -201,7 +210,7 @@ export default function App() {
         )}
       </main>
 
-      {/* 🎵 PLAYER VE OTOMATİK GEÇİŞ SİSTEMİ */}
+      {/* 🎵 PLAYER VE GARANTİLENMİŞ OTOMATİK GEÇİŞ */}
       {currentSong && (
         <div style={playerBarS}>
           <div style={{maxWidth: '600px', margin: 'auto'}}>
@@ -213,7 +222,7 @@ export default function App() {
             <audio 
               ref={audioRef} 
               autoPlay 
-              onEnded={nextSong} 
+              onEnded={handleNextSong} // Bu fonksiyon sıradaki şarkıyı garanti eder
               onPlay={()=>setIsPlaying(true)} 
               onPause={()=>setIsPlaying(false)} 
               controls 
