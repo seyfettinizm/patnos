@@ -32,58 +32,73 @@ export default function App() {
     alert("Başarıyla Eklendi!");
   };
 
-  const adminFilteredSongs = songs.filter(s => 
+  const filteredSongs = songs.filter(s => 
     s.title.toLowerCase().includes(adminSearchTerm.toLowerCase()) || 
     s.artist.toLowerCase().includes(adminSearchTerm.toLowerCase())
   );
 
   return (
-    <div style={{ background: '#050505', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <header style={{ padding: '20px', textAlign: 'center', borderBottom: '1px solid #111' }}>
-        <h1 style={{ color: 'orange' }}>İZMİR PATNOSLULAR DERNEĞİ</h1>
-        <div style={{ marginTop: '10px' }}>
-          <button onClick={() => setView('home')} style={navBtn}>Ana Sayfa</button>
-          <button onClick={() => setView('admin')} style={navBtn}>Yönetim</button>
+    <div style={{ background: '#050505', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif', paddingBottom: '50px' }}>
+      <header style={{ padding: '30px', textAlign: 'center', background: '#000', borderBottom: '2px solid orange' }}>
+        <h1 style={{ color: 'orange', letterSpacing: '2px', marginBottom: '15px' }}>İZMİR PATNOSLULAR DERNEĞİ</h1>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '25px' }}>
+          <button onClick={() => setView('home')} style={view === 'home' ? activeNav : navBtn}>ANA SAYFA</button>
+          <button onClick={() => setView('admin')} style={view === 'admin' ? activeNav : navBtn}>YÖNETİM</button>
         </div>
       </header>
 
-      <main style={{ padding: '20px', maxWidth: '800px', margin: 'auto' }}>
-        {view === 'admin' && (
+      <main style={{ padding: '20px', maxWidth: '900px', margin: 'auto' }}>
+        {view === 'admin' ? (
           <div>
             {!isAuth ? (
-              <input type="password" placeholder="Şifre..." style={inputS} onKeyDown={e => e.key === 'Enter' && (e.currentTarget.value === "Mihriban04" ? setIsAuth(true) : alert("Hata!"))} />
+              <div style={panel}>
+                <h3 style={{color: 'orange', textAlign: 'center'}}>Yönetim Girişi</h3>
+                <input type="password" placeholder="Şifre..." style={inputS} onKeyDown={e => e.key === 'Enter' && (e.currentTarget.value === "Mihriban04" ? setIsAuth(true) : alert("Hata!"))} />
+              </div>
             ) : (
               <div>
                 <div style={panel}>
-                  <h3 style={{color: 'orange'}}>Yeni Şarkı Ekle</h3>
-                  <input placeholder="Şarkı Adı" value={form.title} style={inputS} onChange={e => setForm({...form, title: e.target.value})} />
-                  <input placeholder="Sanatçı" value={form.artist} style={inputS} onChange={e => setForm({...form, artist: e.target.value})} />
-                  <input placeholder="URL" value={form.url} style={inputS} onChange={e => setForm({...form, url: e.target.value})} />
+                  <h3 style={{color: 'orange', marginBottom: '15px'}}>Yeni Eser Ekle</h3>
+                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px'}}>
+                    <input placeholder="Şarkı Adı" value={form.title} style={inputS} onChange={e => setForm({...form, title: e.target.value})} />
+                    <input placeholder="Sanatçı" value={form.artist} style={inputS} onChange={e => setForm({...form, artist: e.target.value})} />
+                  </div>
+                  <input placeholder="Müzik Linki" value={form.url} style={inputS} onChange={e => setForm({...form, url: e.target.value})} />
                   <button onClick={handleAdminAction} style={mainBtn}>KAYDET</button>
                 </div>
 
                 <div style={panel}>
-                  <h3 style={{color: 'orange'}}>Arşiv Yönetimi</h3>
-                  {/* ARAMA ÇUBUĞU BURADA */}
-                  <div style={{ marginBottom: '20px', padding: '10px', border: '1px solid orange', borderRadius: '8px' }}>
-                    <label style={{ fontSize: '12px', color: 'orange', display: 'block', marginBottom: '5px' }}>🔍 ŞARKI VEYA SANATÇI ARA</label>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                    <h3 style={{color: 'orange', margin: 0}}>Arşiv Yönetimi</h3>
                     <input 
                       type="text" 
-                      placeholder="İsim yazın..." 
-                      style={{ ...inputS, marginBottom: 0 }}
+                      placeholder="🔍 Hızlı Ara..." 
+                      style={{...inputS, width: '200px', marginBottom: 0, padding: '8px'}}
                       value={adminSearchTerm}
                       onChange={(e) => setAdminSearchTerm(e.target.value)}
                     />
                   </div>
-                  {adminFilteredSongs.map(s => (
-                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #222' }}>
-                      <span>{s.title} - {s.artist}</span>
-                      <button onClick={async () => { if(confirm("Silinsin mi?")) { const n = songs.filter(x => x.id !== s.id); setSongs(n); syncDB(n); } }} style={{color:'red', background:'none', border:'none', cursor:'pointer'}}>Sil</button>
+                  {filteredSongs.map(s => (
+                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', borderBottom: '1px solid #222', background: '#0a0a0a', marginBottom: '5px' }}>
+                      <span><b style={{color: 'orange'}}>{s.title}</b> - {s.artist}</span>
+                      <button onClick={async () => { if(confirm("Silinsin mi?")) { const n = songs.filter(x => x.id !== s.id); setSongs(n); syncDB(n); } }} style={{color:'red', background:'none', border:'none', cursor:'pointer'}}>SİL</button>
                     </div>
                   ))}
                 </div>
               </div>
             )}
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: '15px' }}>
+            {songs.map(s => (
+              <div key={s.id} style={{ background: '#111', padding: '20px', borderRadius: '12px', border: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                   <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'orange' }}>{s.title}</div>
+                   <div style={{ color: '#888' }}>{s.artist}</div>
+                </div>
+                <button onClick={() => window.open(s.url, '_blank')} style={{padding: '10px 20px', border: '1px solid orange', color: 'orange', background: 'none', cursor: 'pointer', borderRadius: '20px'}}>OYNAT</button>
+              </div>
+            ))}
           </div>
         )}
       </main>
@@ -91,7 +106,8 @@ export default function App() {
   );
 }
 
-const navBtn = { color: '#888', background: 'none', border: 'none', cursor: 'pointer', margin: '0 10px' };
-const inputS = { width: '100%', padding: '12px', marginBottom: '10px', background: '#000', border: '1px solid #222', borderRadius: '8px', color: '#fff' };
-const mainBtn = { width: '100%', padding: '12px', background: 'orange', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' };
-const panel = { background: '#111', padding: '20px', borderRadius: '15px', marginBottom: '20px' };
+const navBtn = { color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' };
+const activeNav = { ...navBtn, color: 'orange', borderBottom: '2px solid orange' };
+const inputS = { width: '100%', padding: '12px', marginBottom: '10px', background: '#000', border: '1px solid #333', borderRadius: '8px', color: '#fff', boxSizing: 'border-box' };
+const mainBtn = { width: '100%', padding: '15px', background: 'orange', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' };
+const panel = { background: '#111', padding: '25px', borderRadius: '15px', marginBottom: '25px', border: '1px solid #1a1a1a' };
