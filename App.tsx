@@ -21,8 +21,11 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [form, setForm] = useState({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
 
-  // Verileri yükle (Mevcut verilerine dokunmaz, sadece okur)
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { 
+    loadData();
+    // Aplikasyon başlığı için
+    document.title = config.title;
+  }, [config.title]);
 
   const loadData = async () => {
     const { data } = await supabase.from('settings').select('value').eq('id', 'app_data').single();
@@ -38,7 +41,7 @@ export default function App() {
     setConfig(newConfig);
   };
 
-  // --- 🔒 YÖNETİM PANELİ (TAMAMEN KORUMALI) ---
+  // --- 🛡️ 2026-02-09 KORUMALI YÖNETİM PANELİ ---
   const handleSaveSong = async () => {
     const audio = new Audio(); audio.src = form.url;
     audio.onloadedmetadata = async () => {
@@ -51,29 +54,22 @@ export default function App() {
       await syncDB(updatedSongs);
       setForm({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
       setEditingId(null);
-      alert("İşlem Başarılı!");
+      alert("Başarıyla Kaydedildi!");
     };
   };
 
-  // --- 🎵 PLAYER ONARIMI VE OTOMATİK GEÇİŞ ---
+  // --- 🎵 PLAYER & OTOMATİK GEÇİŞ SİSTEMİ (KORUMALI) ---
   const playSong = (song: any) => {
     if (currentSong?.id === song.id) {
-      if (audioRef.current?.paused) {
-        audioRef.current.play().catch(() => {});
-        setIsPlaying(true);
-      } else {
-        audioRef.current?.pause();
-        setIsPlaying(false);
-      }
+      if (audioRef.current?.paused) audioRef.current.play(); else audioRef.current?.pause();
     } else {
       setCurrentSong(song);
       setIsPlaying(true);
-      // Modern tarayıcılar için güvenli yükleme döngüsü
       setTimeout(() => {
         if (audioRef.current) {
-          audioRef.current.pause();
+          audioRef.current.src = song.url;
           audioRef.current.load();
-          audioRef.current.play().catch(e => console.error("Oynatma hatası:", e));
+          audioRef.current.play().catch(() => {});
         }
       }, 50);
     }
@@ -83,13 +79,9 @@ export default function App() {
     const list = songs
       .filter(s => (activeTab === "Hepsi" || s.category === activeTab))
       .sort((a,b) => (b.likes || 0) - (a.likes || 0));
-    
     const idx = list.findIndex(s => s.id === currentSong?.id);
-    if (idx !== -1 && idx < list.length - 1) {
-      playSong(list[idx + 1]);
-    } else {
-      setIsPlaying(false);
-    }
+    if (idx !== -1 && idx < list.length - 1) playSong(list[idx + 1]);
+    else setIsPlaying(false);
   };
 
   const forceDownload = async (e: any, url: string, title: string) => {
@@ -106,21 +98,14 @@ export default function App() {
 
   const categories = ["Hepsi", "Patnoslu Sanatçılar", "Dengbêjler", "Patnos Türküleri", "Sizden Gelenler"];
 
-  const filteredSongs = songs
-    .filter(s => (activeTab === "Hepsi" || s.category === activeTab) && (s.title.toLowerCase().includes(searchTerm.toLowerCase()) || s.artist.toLowerCase().includes(searchTerm.toLowerCase())))
-    .sort((a,b) => (b.likes || 0) - (a.likes || 0))
-    .slice(0, 8);
-
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '180px' : '40px', fontFamily: 'sans-serif' }}>
       
       <header style={{ padding: '25px', textAlign: 'center' }}>
-        {config.logo && <img src={config.logo} style={{ width: '65px', margin: '0 auto 10px', display: 'block' }} />}
-        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{config.title}</h1>
+        {config.logo && <img src={config.logo} style={{ width: '65px', margin: '0 auto 10px', display: 'block', borderRadius: '15px' }} />}
+        <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{config.title}</h1>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginTop: '8px' }}>
-          <div style={{ height: '2px', width: '35px', background: 'linear-gradient(to right, transparent, orange)' }}></div>
           <span style={{ color: 'orange', fontSize: '10px', letterSpacing: '3px', fontWeight: 'bold' }}>MÜZİK KUTUSU</span>
-          <div style={{ height: '2px', width: '35px', background: 'linear-gradient(to left, transparent, orange)' }}></div>
         </div>
         <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
           <button onClick={() => setView('home')} style={view === 'home' ? activeNav : navBtn}>Ana Sayfa</button>
@@ -129,7 +114,6 @@ export default function App() {
       </header>
 
       <main style={{ maxWidth: '600px', margin: 'auto', padding: '0 15px' }}>
-        
         {view === 'admin' ? (
           <div style={{ background: '#111', padding: '25px', borderRadius: '20px', border: '1px solid #222' }}>
             {!isAuth ? (
@@ -137,66 +121,32 @@ export default function App() {
             ) : (
               <div>
                 <input placeholder="Logo URL" value={config.logo} onChange={e=>setConfig({...config, logo:e.target.value})} style={inputS}/>
-                <input placeholder="Banner URL" value={config.banner} onChange={e=>setConfig({...config, banner:e.target.value})} style={inputS}/>
                 <button onClick={() => syncDB(songs, config)} style={saveBtnS}>AYARLARI KAYDET</button>
                 <div style={{marginTop:'30px', paddingTop:'20px', borderTop:'1px solid #222'}}>
-                  <input placeholder="Şarkı" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} style={inputS}/>
-                  <input placeholder="Sanatçı" value={form.artist} onChange={e=>setForm({...form, artist:e.target.value})} style={inputS}/>
-                  <input placeholder="URL" value={form.url} onChange={e=>setForm({...form, url:e.target.value})} style={inputS}/>
-                  <input placeholder="Kapak" value={form.cover} onChange={e=>setForm({...form, cover:e.target.value})} style={inputS}/>
-                  <select value={form.category} onChange={e=>setForm({...form, category:e.target.value})} style={inputS}>
-                    {categories.filter(c=>c!=="Hepsi").map(c=><option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <input placeholder="Şarkı Adı" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} style={inputS}/>
+                  <input placeholder="Müzik URL" value={form.url} onChange={e=>setForm({...form, url:e.target.value})} style={inputS}/>
                   <button onClick={handleSaveSong} style={saveBtnS}>KAYDET</button>
-                </div>
-                <div style={{marginTop: '30px'}}>
-                  <input placeholder="🔍 Listede Ara..." style={{...inputS, borderColor: 'orange'}} onChange={(e) => setAdminSearchTerm(e.target.value)} />
-                  {songs.filter(s => s.title.toLowerCase().includes(adminSearchTerm.toLowerCase())).map(s => (
-                    <div key={s.id} style={{display:'flex', justifyContent:'space-between', padding:'10px', borderBottom:'1px solid #222'}}>
-                      <span>{s.title}</span>
-                      <div>
-                        <button onClick={() => {setEditingId(s.id); setForm(s); window.scrollTo(0,0);}} style={{color:'orange', marginRight:'10px', background:'none', border:'none'}}>DÜZENLE</button>
-                        <button onClick={() => syncDB(songs.filter(i=>i.id!==s.id))} style={{color:'red', background:'none', border:'none'}}>SİL</button>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
           </div>
-        ) : view === 'contact' ? (
-          <div style={{ animation: 'fadeIn 0.5s' }}>
-            <div style={{ background: '#111', padding: '30px', borderRadius: '25px', border: '1px solid orange', textAlign: 'center', marginBottom: '20px' }}>
-              <h3 style={{ color: 'orange', margin: 0 }}>Gönül Köprümüz</h3>
-              <p style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '10px' }}>Müziklerinizi ulaştırın, yayınlayalım!</p>
-            </div>
-            <div style={contactBoxS}>📍 <b>Adres:</b> Yeşilbağlar Mh. 637/33 Sk. NO:25 Buca/İZMİR</div>
-            <div style={contactBoxS}>📧 <b>E-Posta:</b> patnosumuz@gmail.com</div>
-            <div style={{ ...contactBoxS, color: '#25D366' }}>🟢 <b>WhatsApp:</b> +90 505 225 06 55</div>
-            <button onClick={() => setView('home')} style={{ ...saveBtnS, marginTop: '20px', background: '#222', color: '#fff' }}>GERİ DÖN</button>
-          </div>
         ) : (
           <div>
-             {config.banner && <div style={{ width: '100%', height: '170px', borderRadius: '18px', overflow: 'hidden', marginBottom: '20px' }}><img src={config.banner} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
                 {categories.map(cat => (
                   <button key={cat} onClick={() => setActiveTab(cat)} style={activeTab === cat ? activeTabS : tabBtnS}>{cat}</button>
                 ))}
                 <button onClick={() => setView('contact')} style={{ ...tabBtnS, borderColor: 'orange', color: 'orange' }}>📞 İletişim</button>
              </div>
-             <input placeholder="🔍 Ara..." style={searchBarS} onChange={(e) => setSearchTerm(e.target.value)} />
+             <input placeholder="🔍 Listede Ara..." style={searchBarS} onChange={(e) => setSearchTerm(e.target.value)} />
              <div style={{ marginTop: '20px' }}>
-                {filteredSongs.map(s => (
+                {songs.filter(s => (activeTab === "Hepsi" || s.category === activeTab) && (s.title.toLowerCase().includes(searchTerm.toLowerCase()))).sort((a,b) => (b.likes || 0) - (a.likes || 0)).map(s => (
                   <div key={s.id} onClick={() => playSong(s)} style={{...songCardS, borderColor: currentSong?.id === s.id ? 'orange' : '#111'}}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <img src={s.cover || config.logo} style={{ width: '45px', height: '45px', borderRadius: '8px' }} />
-                      <div><div style={{ fontWeight: 'bold', fontSize: '14px' }}>{s.title}</div><div style={{ color: '#555', fontSize: '11px' }}>{s.artist}</div></div>
+                      <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{s.title}</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{color:'#666', fontSize:'11px'}}>{s.duration}</span>
-                      <button onClick={(e) => {e.stopPropagation(); syncDB(songs.map(i=>i.id===s.id?{...i,likes:(i.likes||0)+1}:i));}} style={{background:'none', border:'none', color:'red', cursor:'pointer'}}>❤️ {s.likes || 0}</button>
-                      <button onClick={(e) => forceDownload(e, s.url, s.title)} style={{background:'none', border:'none', fontSize:'18px', cursor:'pointer'}}>📥</button>
-                    </div>
+                    <button onClick={(e) => forceDownload(e, s.url, s.title)} style={{background:'none', border:'none', fontSize:'18px'}}>📥</button>
                   </div>
                 ))}
              </div>
@@ -204,32 +154,15 @@ export default function App() {
         )}
       </main>
 
-      {/* 🎵 PLAYER - KESİN ÇÖZÜM */}
       {currentSong && (
         <div style={playerBarS}>
           <div style={{maxWidth: '600px', margin: 'auto'}}>
             <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'10px'}}>
-              <img src={currentSong.cover || config.logo} style={{width:'40px', height:'40px', borderRadius:'5px', border:'1px solid orange'}} />
-              <div style={{flex:1, overflow:'hidden'}}><div style={{fontSize:'14px', fontWeight:'bold', color:'orange', whiteSpace:'nowrap'}}>{currentSong.title}</div></div>
-              <button 
-                onClick={() => {
-                  if (audioRef.current?.paused) audioRef.current.play();
-                  else audioRef.current?.pause();
-                }} 
-                style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px', fontWeight:'bold', cursor:'pointer'}}
-              >
-                {isPlaying ? 'II' : '▶'}
-              </button>
+              <img src={currentSong.cover || config.logo} style={{width:'40px', height:'40px', borderRadius:'5px'}} />
+              <div style={{flex:1, color:'orange', fontWeight:'bold', fontSize:'14px', overflow:'hidden', whiteSpace:'nowrap'}}>{currentSong.title}</div>
+              <button onClick={() => audioRef.current?.paused ? audioRef.current.play() : audioRef.current?.pause()} style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px'}}>{isPlaying ? 'II' : '▶'}</button>
             </div>
-            <audio 
-              ref={audioRef} 
-              src={currentSong.url}
-              onEnded={handleNextSong}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              controls 
-              style={{width:'100%', height:'32px', filter:'invert(1)'}} 
-            />
+            <audio ref={audioRef} src={currentSong.url} onEnded={handleNextSong} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} controls style={{width:'100%', height:'32px', filter:'invert(1)'}} />
           </div>
         </div>
       )}
@@ -243,8 +176,8 @@ const activeNav = { ...navBtn, color: 'orange', borderBottom: '2px solid orange'
 const inputS = { padding: '12px', background: '#080808', border: '1px solid #222', color: '#fff', borderRadius: '10px', width: '100%', marginBottom: '10px' };
 const saveBtnS = { background: 'orange', color: '#000', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', width: '100%' };
 const searchBarS = { width: '100%', padding: '15px', background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '15px', color: '#fff', outline: 'none' };
-const tabBtnS = { background: '#111', color: '#666', border: '1px solid #222', padding: '12px', borderRadius: '10px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' };
+const tabBtnS = { background: '#111', color: '#666', border: '1px solid #222', padding: '12px', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold' };
 const activeTabS = { ...tabBtnS, background: 'orange', color: '#000', borderColor: 'orange' };
 const songCardS = { background: '#080808', padding: '10px 15px', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', border: '1px solid #111', cursor: 'pointer' };
 const playerBarS = { position: 'fixed' as 'fixed', bottom: 0, width: '100%', background: 'rgba(5,5,5,0.95)', padding: '15px 20px', borderTop: '2px solid orange', zIndex: 1000 };
-const contactBoxS = { background: '#0a0a0a', padding: '15px', borderRadius: '12px', border: '1px solid #222', fontSize: '14px', marginBottom: '10px' };
+const contactBoxS = { background: '#0a0a0a', padding: '15px', borderRadius: '12px', border: '1px solid #222', fontSize: '14px' };
