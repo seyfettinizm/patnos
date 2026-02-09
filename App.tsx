@@ -11,6 +11,7 @@ export default function App() {
   const [isAuth, setIsAuth] = useState(false);
   const [songs, setSongs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("Hepsi");
 
   useEffect(() => { loadData(); }, []);
 
@@ -19,67 +20,77 @@ export default function App() {
     if (data?.value) setSongs(data.value.songs || []);
   };
 
-  // Eski düzeni koruyarak arama yapma fonksiyonu
-  const filteredSongs = songs.filter(s => 
-    (s.title?.toLowerCase() || "").includes(searchTerm.toLowerCase().trim()) || 
-    (s.artist?.toLowerCase() || "").includes(searchTerm.toLowerCase().trim())
-  );
+  const categories = ["Hepsi", "Patnoslu Sanatçılar", "Dengbêjler", "Patnos Türküleri", "Sizden Gelenler"];
+
+  const filteredSongs = songs.filter(s => {
+    const matchesSearch = (s.title?.toLowerCase() || "").includes(searchTerm.toLowerCase().trim());
+    const matchesTab = activeTab === "Hepsi" || s.category === activeTab;
+    return matchesSearch && matchesTab;
+  });
 
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      {/* ÜST BAŞLIK VE NAVİGASYON */}
-      <header style={{ padding: '30px', textAlign: 'center', borderBottom: '2px solid orange', background: '#050505' }}>
-        <h1 style={{ color: 'orange', letterSpacing: '2px', margin: 0, fontSize: '24px' }}>İZMİR PATNOSLULAR DERNEĞİ</h1>
-        <div style={{ marginTop: '15px' }}>
-          <button onClick={() => setView('home')} style={view === 'home' ? activeNav : navBtn}>ANA SAYFA</button>
-          <button onClick={() => setView('admin')} style={view === 'admin' ? activeNav : navBtn}>YÖNETİM</button>
-        </div>
+      
+      {/* ÜST LOGO VE BAŞLIK (Görsel 2'deki gibi) */}
+      <header style={{ padding: '40px 20px', textAlign: 'center', background: 'linear-gradient(to bottom, #050505, #000)' }}>
+        <img src="https://docdtizfqeolqwwfaiyi.supabase.co/storage/v1/object/public/songs/logo.png" alt="Logo" style={{ width: '80px', marginBottom: '15px' }} />
+        <h1 style={{ color: '#fff', fontSize: '28px', margin: '5px 0', letterSpacing: '1px' }}>İZMİR PATNOSLULAR DERNEĞİ</h1>
+        <p style={{ color: 'orange', fontSize: '14px', fontWeight: 'bold', letterSpacing: '3px' }}>— MÜZİK KUTUSU —</p>
+        
+        <nav style={{ marginTop: '20px' }}>
+          <button onClick={() => setView('home')} style={view === 'home' ? activeNav : navBtn}>Ana Sayfa</button>
+          <button style={navBtn}>İletişim</button>
+          <button onClick={() => setView('admin')} style={view === 'admin' ? activeNav : navBtn}>Yönetim</button>
+        </nav>
       </header>
 
-      <main style={{ padding: '20px', maxWidth: '800px', margin: 'auto' }}>
+      <main style={{ maxWidth: '800px', margin: 'auto', padding: '0 20px 40px' }}>
         {view === 'admin' ? (
-          /* YÖNETİM PANELİ DÜZENİ */
-          <div style={{ textAlign: 'center', background: '#111', padding: '40px', borderRadius: '15px', border: '1px solid #222' }}>
+          /* YÖNETİM PANELİ */
+          <div style={{ textAlign: 'center', background: '#111', padding: '40px', borderRadius: '20px', border: '1px solid #222' }}>
             {!isAuth ? (
               <input type="password" placeholder="Şifre Giriniz..." style={inputS} onKeyDown={e => e.key === 'Enter' && (e.currentTarget.value === "Mihriban04" ? setIsAuth(true) : alert("Hatalı!"))} />
             ) : (
-               <div style={{ color: 'orange' }}>
-                 <h2 style={{margin: 0}}>Hoşgeldiniz</h2>
-                 <p style={{color: '#888'}}>Şu an yönetim yetkiniz aktif. Şarkı ekleme özelliği yakında burada olacak.</p>
-                 <button onClick={() => setIsAuth(false)} style={{color:'red', background:'none', border:'none', cursor:'pointer'}}>Çıkış Yap</button>
-               </div>
+               <div style={{ color: 'orange' }}><h2>Yönetim Paneli Aktif</h2><button onClick={() => setIsAuth(false)} style={{color:'#555', background:'none', border:'none', cursor:'pointer'}}>Çıkış</button></div>
             )}
           </div>
         ) : (
-          /* ANA SAYFA (ESKİ ŞIK DÜZEN) */
+          /* ANA SAYFA (Görsel 2 Düzeni) */
           <div>
-            {/* TASARIMI BOZMAYAN ARAMA ÇUBUĞU */}
-            <div style={{ position: 'relative', marginBottom: '25px' }}>
-              <input 
-                type="text" 
-                placeholder="🔍 Şarkı veya Sanatçı Ara..." 
-                style={searchBarS}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            {/* MANZARA RESMİ */}
+            <div style={{ width: '100%', height: '250px', borderRadius: '30px', overflow: 'hidden', marginBottom: '30px', border: '1px solid #222' }}>
+              <img src="https://docdtizfqeolqwwfaiyi.supabase.co/storage/v1/object/public/songs/patnos-manzara.jpg" alt="Patnos" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
 
-            <div style={{ display: 'grid', gap: '15px' }}>
-              {filteredSongs.length > 0 ? (
-                filteredSongs.map(s => (
-                  /* İŞTE O ESKİ ŞIK ŞARKI KARTLARI */
-                  <div key={s.id} style={songCardS}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ color: 'orange', fontWeight: 'bold', fontSize: '18px' }}>{s.title}</div>
-                      <div style={{ color: '#888', fontSize: '14px', marginTop: '4px' }}>{s.artist}</div>
+            {/* KATEGORİ SEKMELERİ */}
+            <div style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '20px', marginBottom: '20px' }}>
+              {categories.map(cat => (
+                <button key={cat} onClick={() => setActiveTab(cat)} style={activeTab === cat ? activeTabS : tabBtnS}>{cat}</button>
+              ))}
+            </div>
+
+            {/* ARAMA ÇUBUĞU (Görsel 1'deki özellik) */}
+            <input 
+              type="text" 
+              placeholder="🔍 Şarkı veya Sanatçı Ara..." 
+              style={searchBarS}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+
+            {/* ŞARKI LİSTESİ */}
+            <div style={{ display: 'grid', gap: '15px', marginTop: '30px' }}>
+              {filteredSongs.map(s => (
+                <div key={s.id} style={songCardS}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <img src={s.cover || "https://docdtizfqeolqwwfaiyi.supabase.co/storage/v1/object/public/songs/default-art.png"} style={{ width: '50px', height: '50px', borderRadius: '8px' }} />
+                    <div>
+                      <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '17px' }}>{s.title}</div>
+                      <div style={{ color: '#666', fontSize: '13px' }}>Söz Müzik: {s.artist}</div>
                     </div>
-                    <button onClick={() => window.open(s.url, '_blank')} style={playBtnS}>OYNAT</button>
                   </div>
-                ))
-              ) : (
-                <div style={{textAlign: 'center', padding: '50px', color: '#444'}}>
-                  {searchTerm ? "Aradığınız kriterde şarkı bulunamadı." : "Şarkılar yükleniyor..."}
+                  <button onClick={() => window.open(s.url, '_blank')} style={playBtnS}>OYNAT</button>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         )}
@@ -88,10 +99,12 @@ export default function App() {
   );
 }
 
-// STİL TANIMLAMALARI (ESKİ DÜZENİN SIRRI BURADA)
-const navBtn = { background: 'none', border: 'none', color: '#888', cursor: 'pointer', margin: '0 15px', fontWeight: 'bold', fontSize: '14px', transition: '0.3s' };
-const activeNav = { ...navBtn, color: 'orange', borderBottom: '2px solid orange', paddingBottom: '5px' };
-const inputS = { padding: '12px', background: '#000', border: '1px solid orange', color: '#fff', borderRadius: '8px', width: '250px', textAlign: 'center' };
-const searchBarS = { width: '100%', padding: '15px 20px', background: '#111', border: '1px solid #222', borderRadius: '15px', color: '#fff', fontSize: '16px', outline: 'none', transition: '0.3s' };
-const songCardS = { background: '#111', padding: '20px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #222', transition: '0.2s' };
-const playBtnS = { padding: '10px 25px', borderRadius: '25px', border: '1px solid orange', color: 'orange', background: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' };
+// GÖRSEL 2 STİLLERİ
+const navBtn = { background: 'none', border: 'none', color: '#888', cursor: 'pointer', margin: '0 15px', fontSize: '15px' };
+const activeNav = { ...navBtn, color: '#fff', borderBottom: '2px solid orange', paddingBottom: '5px' };
+const tabBtnS = { background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: '16px', whiteSpace: 'nowrap' };
+const activeTabS = { ...tabBtnS, color: 'orange', fontWeight: 'bold' };
+const searchBarS = { width: '100%', padding: '15px', background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '12px', color: '#fff', outline: 'none' };
+const songCardS = { background: '#080808', padding: '15px 20px', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #111' };
+const playBtnS = { padding: '8px 20px', borderRadius: '20px', border: '1px solid orange', color: 'orange', background: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' };
+const inputS = { padding: '12px', background: '#000', border: '1px solid orange', color: '#fff', borderRadius: '8px', textAlign: 'center' };
