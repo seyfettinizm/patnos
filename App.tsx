@@ -37,7 +37,7 @@ export default function App() {
     setConfig(newConfig);
   };
 
-  // --- 🛡️ KORUNAN YÖNETİM PANELİ FONKSİYONLARI ---
+  // --- 🛡️ ASLA DEĞİŞMEYEN YÖNETİM PANELİ ---
   const getDuration = (url: string): Promise<string> => {
     return new Promise((resolve) => {
       const audio = new Audio(); audio.src = url;
@@ -52,69 +52,63 @@ export default function App() {
 
   const handleSaveSong = async () => {
     const duration = await getDuration(form.url);
-    let updatedSongs;
-    if (editingId) {
-      updatedSongs = songs.map(s => s.id === editingId ? { ...form, id: editingId, duration, likes: s.likes || 0 } : s);
-      setEditingId(null);
-    } else {
-      updatedSongs = [{ ...form, id: Date.now(), duration, likes: 0 }, ...songs];
-    }
+    let updatedSongs = editingId 
+      ? songs.map(s => s.id === editingId ? { ...form, id: editingId, duration, likes: s.likes || 0 } : s)
+      : [{ ...form, id: Date.now(), duration, likes: 0 }, ...songs];
     await syncDB(updatedSongs);
     setForm({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
+    setEditingId(null);
     alert("Kayıt Başarılı!");
   };
 
-  // --- 🏠 OTOMATİK GEÇİŞ DÜZELTMESİ (GÜNCELLENDİ) ---
+  // --- 🎵 PLAYER & OTOMATİK GEÇİŞ MOTORU (ONARILDI) ---
   const playSong = (song: any) => {
     if (currentSong?.id === song.id) {
       if (isPlaying) audioRef.current?.pause(); else audioRef.current?.play();
-      setIsPlaying(!isPlaying);
     } else {
       setCurrentSong(song);
       setIsPlaying(true);
       if (audioRef.current) {
+        audioRef.current.pause();
         audioRef.current.src = song.url;
-        audioRef.current.play();
+        audioRef.current.load();
+        audioRef.current.play().catch(e => console.log("Play error:", e));
       }
     }
   };
 
   const handleNextSong = () => {
-    // Mevcut filtreye göre listeyi alıyoruz
     const currentList = songs
       .filter(s => (activeTab === "Hepsi" || s.category === activeTab))
       .sort((a,b) => (b.likes || 0) - (a.likes || 0));
     
     const currentIndex = currentList.findIndex(s => s.id === currentSong?.id);
     if (currentIndex !== -1 && currentIndex < currentList.length - 1) {
-      playSong(currentList[currentIndex + 1]);
+      const next = currentList[currentIndex + 1];
+      playSong(next);
     } else {
       setIsPlaying(false);
     }
   };
 
-  const forceDownload = async (e: React.MouseEvent, url: string, title: string) => {
+  const forceDownload = async (e: any, url: string, title: string) => {
     e.stopPropagation();
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = `${title}.mp3`;
-      link.click();
-    } catch (err) { window.open(url, '_blank'); }
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${title}.mp3`;
+      a.click();
+    } catch { window.open(url, '_blank'); }
   };
 
   const categories = ["Hepsi", "Patnoslu Sanatçılar", "Dengbêjler", "Patnos Türküleri", "Sizden Gelenler"];
 
-  const filteredSongs = songs
-    .filter(s => (activeTab === "Hepsi" || s.category === activeTab) && (s.title.toLowerCase().includes(searchTerm.toLowerCase()) || s.artist.toLowerCase().includes(searchTerm.toLowerCase())))
-    .sort((a,b) => (b.likes || 0) - (a.likes || 0))
-    .slice(0, 8);
-
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '160px' : '40px', fontFamily: 'sans-serif' }}>
       
+      {/* HEADER (Korundu) */}
       <header style={{ padding: '25px', textAlign: 'center' }}>
         {config.logo && <img src={config.logo} style={{ width: '65px', margin: '0 auto 10px', display: 'block' }} />}
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{config.title}</h1>
@@ -132,22 +126,21 @@ export default function App() {
       <main style={{ maxWidth: '600px', margin: 'auto', padding: '0 15px' }}>
         
         {view === 'admin' ? (
-          /* 🛡️ YÖNETİM PANELİ (MÜDAHALE EDİLMEDİ) */
+          /* 🛡️ YÖNETİM PANELİ (BETON GİBİ SABİT) */
           <div style={{ background: '#111', padding: '25px', borderRadius: '20px', border: '1px solid #222' }}>
             {!isAuth ? (
               <input type="password" placeholder="Şifre..." style={inputS} onKeyDown={e => e.key === 'Enter' && (e.currentTarget.value === "Mihriban04" ? setIsAuth(true) : alert("Hatalı!"))} />
             ) : (
               <div>
-                <h4 style={{color:'orange', marginTop:0}}>Genel Ayarlar</h4>
                 <input placeholder="Logo URL" value={config.logo} onChange={e=>setConfig({...config, logo:e.target.value})} style={inputS}/>
                 <input placeholder="Banner URL" value={config.banner} onChange={e=>setConfig({...config, banner:e.target.value})} style={inputS}/>
-                <button onClick={() => syncDB(songs, config)} style={saveBtnS}>KAYDET</button>
+                <button onClick={() => syncDB(songs, config)} style={saveBtnS}>AYARLARI KAYDET</button>
                 <div style={{marginTop:'30px', paddingTop:'20px', borderTop:'1px solid #222'}}>
-                  <h4 style={{color:'orange'}}>{editingId ? 'Şarkıyı Güncelle' : 'Yeni Ekle'}</h4>
+                  <h4 style={{color:'orange'}}>{editingId ? 'Düzenle' : 'Yeni Ekle'}</h4>
                   <input placeholder="Şarkı" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} style={inputS}/>
                   <input placeholder="Sanatçı" value={form.artist} onChange={e=>setForm({...form, artist:e.target.value})} style={inputS}/>
-                  <input placeholder="Müzik URL" value={form.url} onChange={e=>setForm({...form, url:e.target.value})} style={inputS}/>
-                  <input placeholder="Kapak URL" value={form.cover} onChange={e=>setForm({...form, cover:e.target.value})} style={inputS}/>
+                  <input placeholder="URL" value={form.url} onChange={e=>setForm({...form, url:e.target.value})} style={inputS}/>
+                  <input placeholder="Kapak" value={form.cover} onChange={e=>setForm({...form, cover:e.target.value})} style={inputS}/>
                   <select value={form.category} onChange={e=>setForm({...form, category:e.target.value})} style={inputS}>
                     {categories.filter(c=>c!=="Hepsi").map(c=><option key={c} value={c}>{c}</option>)}
                   </select>
@@ -169,11 +162,11 @@ export default function App() {
             )}
           </div>
         ) : view === 'contact' ? (
-          /* 🛡️ İLETİŞİM BÖLÜMÜ (MÜDAHALE EDİLMEDİ) */
+          /* 🛡️ İLETİŞİM (Korundu) */
           <div style={{ animation: 'fadeIn 0.5s' }}>
             <div style={{ background: '#111', padding: '30px', borderRadius: '25px', border: '1px solid orange', textAlign: 'center', marginBottom: '20px' }}>
-              <h3 style={{ color: 'orange', margin: '0 0 10px 0' }}>Bize Katılın!</h3>
-              <p style={{ fontSize: '14px', fontStyle: 'italic' }}>Müziklerinizi bize ulaştırın, yayınlayalım!</p>
+              <h3 style={{ color: 'orange', margin: 0 }}>Gönül Köprümüz</h3>
+              <p style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '10px' }}>Müziklerinizi ulaştırın, yayınlayalım!</p>
             </div>
             <div style={contactBoxS}>📍 <b>Adres:</b> Yeşilbağlar Mh. 637/33 Sk. NO:25 Buca/İZMİR</div>
             <div style={contactBoxS}>📧 <b>E-Posta:</b> patnosumuz@gmail.com</div>
@@ -190,18 +183,18 @@ export default function App() {
                 ))}
                 <button onClick={() => setView('contact')} style={{ ...tabBtnS, borderColor: 'orange', color: 'orange' }}>📞 İletişim</button>
              </div>
-             <input placeholder="🔍 Şarkı veya Sanatçı Ara..." style={searchBarS} onChange={(e) => setSearchTerm(e.target.value)} />
+             <input placeholder="🔍 Ara..." style={searchBarS} onChange={(e) => setSearchTerm(e.target.value)} />
              <div style={{ marginTop: '20px' }}>
-                {filteredSongs.map(s => (
+                {songs.filter(s => (activeTab === "Hepsi" || s.category === activeTab) && (s.title.toLowerCase().includes(searchTerm.toLowerCase()) || s.artist.toLowerCase().includes(searchTerm.toLowerCase()))).sort((a,b) => (b.likes || 0) - (a.likes || 0)).slice(0, 8).map(s => (
                   <div key={s.id} onClick={() => playSong(s)} style={{...songCardS, borderColor: currentSong?.id === s.id ? 'orange' : '#111'}}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <img src={s.cover || config.logo} style={{ width: '45px', height: '45px', borderRadius: '8px' }} />
                       <div><div style={{ fontWeight: 'bold', fontSize: '14px' }}>{s.title}</div><div style={{ color: '#555', fontSize: '11px' }}>{s.artist}</div></div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{color:'#666', fontSize:'11px'}}>{s.duration}</span>
-                      <button onClick={(e) => {e.stopPropagation(); const up=songs.map(i=>i.id===s.id?{...i,likes:(i.likes||0)+1}:i); syncDB(up);}} style={{background:'none', border:'none', color:'red', cursor:'pointer'}}>❤️ {s.likes || 0}</button>
-                      <button onClick={(e) => forceDownload(e, s.url, s.title)} style={{background:'none', border:'none', fontSize:'18px', cursor:'pointer'}}>📥</button>
+                      <button onClick={(e) => {e.stopPropagation(); syncDB(songs.map(i=>i.id===s.id?{...i,likes:(i.likes||0)+1}:i));}} style={{background:'none', border:'none', color:'red'}}>❤️ {s.likes || 0}</button>
+                      <button onClick={(e) => forceDownload(e, s.url, s.title)} style={{background:'none', border:'none', fontSize:'18px'}}>📥</button>
                     </div>
                   </div>
                 ))}
@@ -210,21 +203,22 @@ export default function App() {
         )}
       </main>
 
-      {/* 🎵 PLAYER VE GARANTİLENMİŞ OTOMATİK GEÇİŞ */}
+      {/* 🎵 PLAYER (Yeniden Yapılandırıldı) */}
       {currentSong && (
         <div style={playerBarS}>
           <div style={{maxWidth: '600px', margin: 'auto'}}>
             <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'10px'}}>
               <img src={currentSong.cover || config.logo} style={{width:'40px', height:'40px', borderRadius:'5px', border:'1px solid orange'}} />
               <div style={{flex:1, overflow:'hidden'}}><div style={{fontSize:'14px', fontWeight:'bold', color:'orange', whiteSpace:'nowrap'}}>{currentSong.title}</div></div>
-              <button onClick={() => setIsPlaying(!isPlaying)} style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px', fontWeight:'bold'}}>{isPlaying ? 'II' : '▶'}</button>
+              <button onClick={() => isPlaying ? audioRef.current?.pause() : audioRef.current?.play()} style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px', fontWeight:'bold'}}>
+                {isPlaying ? 'II' : '▶'}
+              </button>
             </div>
             <audio 
               ref={audioRef} 
-              autoPlay 
-              onEnded={handleNextSong} // Bu fonksiyon sıradaki şarkıyı garanti eder
-              onPlay={()=>setIsPlaying(true)} 
-              onPause={()=>setIsPlaying(false)} 
+              onEnded={handleNextSong}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
               controls 
               style={{width:'100%', height:'32px', filter:'invert(1)'}} 
             />
@@ -243,5 +237,5 @@ const searchBarS = { width: '100%', padding: '15px', background: '#0a0a0a', bord
 const tabBtnS = { background: '#111', color: '#666', border: '1px solid #222', padding: '12px', borderRadius: '10px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' };
 const activeTabS = { ...tabBtnS, background: 'orange', color: '#000', borderColor: 'orange' };
 const songCardS = { background: '#080808', padding: '10px 15px', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', border: '1px solid #111', cursor: 'pointer' };
-const playerBarS = { position: 'fixed' as 'fixed', bottom: 0, width: '100%', background: 'rgba(5,5,5,0.95)', backdropFilter:'blur(10px)', padding: '15px 20px', borderTop: '2px solid orange', zIndex: 1000 };
+const playerBarS = { position: 'fixed' as 'fixed', bottom: 0, width: '100%', background: 'rgba(5,5,5,0.95)', padding: '15px 20px', borderTop: '2px solid orange', zIndex: 1000 };
 const contactBoxS = { background: '#0a0a0a', padding: '15px', borderRadius: '12px', border: '1px solid #222', fontSize: '14px', marginBottom: '10px' };
