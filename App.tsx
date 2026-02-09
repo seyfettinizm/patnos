@@ -21,6 +21,7 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [form, setForm] = useState({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
 
+  // Verileri yükle (Mevcut verilerine dokunmaz, sadece okur)
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
@@ -37,55 +38,55 @@ export default function App() {
     setConfig(newConfig);
   };
 
-  // --- 🛡️ ASLA DEĞİŞMEYEN YÖNETİM PANELİ ---
-  const getDuration = (url: string): Promise<string> => {
-    return new Promise((resolve) => {
-      const audio = new Audio(); audio.src = url;
-      audio.addEventListener('loadedmetadata', () => {
-        const min = Math.floor(audio.duration / 60);
-        const sec = Math.floor(audio.duration % 60);
-        resolve(`${min}:${sec < 10 ? '0' : ''}${sec}`);
-      });
-      audio.addEventListener('error', () => resolve("0:00"));
-    });
-  };
-
+  // --- 🔒 YÖNETİM PANELİ (TAMAMEN KORUMALI) ---
   const handleSaveSong = async () => {
-    const duration = await getDuration(form.url);
-    let updatedSongs = editingId 
-      ? songs.map(s => s.id === editingId ? { ...form, id: editingId, duration, likes: s.likes || 0 } : s)
-      : [{ ...form, id: Date.now(), duration, likes: 0 }, ...songs];
-    await syncDB(updatedSongs);
-    setForm({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
-    setEditingId(null);
-    alert("Kayıt Başarılı!");
+    const audio = new Audio(); audio.src = form.url;
+    audio.onloadedmetadata = async () => {
+      const min = Math.floor(audio.duration / 60);
+      const sec = Math.floor(audio.duration % 60);
+      const duration = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+      let updatedSongs = editingId 
+        ? songs.map(s => s.id === editingId ? { ...form, id: editingId, duration, likes: s.likes || 0 } : s)
+        : [{ ...form, id: Date.now(), duration, likes: 0 }, ...songs];
+      await syncDB(updatedSongs);
+      setForm({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
+      setEditingId(null);
+      alert("İşlem Başarılı!");
+    };
   };
 
-  // --- 🎵 PLAYER & OTOMATİK GEÇİŞ MOTORU (ONARILDI) ---
+  // --- 🎵 PLAYER ONARIMI VE OTOMATİK GEÇİŞ ---
   const playSong = (song: any) => {
     if (currentSong?.id === song.id) {
-      if (isPlaying) audioRef.current?.pause(); else audioRef.current?.play();
+      if (audioRef.current?.paused) {
+        audioRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      } else {
+        audioRef.current?.pause();
+        setIsPlaying(false);
+      }
     } else {
       setCurrentSong(song);
       setIsPlaying(true);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = song.url;
-        audioRef.current.load();
-        audioRef.current.play().catch(e => console.log("Play error:", e));
-      }
+      // Modern tarayıcılar için güvenli yükleme döngüsü
+      setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.load();
+          audioRef.current.play().catch(e => console.error("Oynatma hatası:", e));
+        }
+      }, 50);
     }
   };
 
   const handleNextSong = () => {
-    const currentList = songs
+    const list = songs
       .filter(s => (activeTab === "Hepsi" || s.category === activeTab))
       .sort((a,b) => (b.likes || 0) - (a.likes || 0));
     
-    const currentIndex = currentList.findIndex(s => s.id === currentSong?.id);
-    if (currentIndex !== -1 && currentIndex < currentList.length - 1) {
-      const next = currentList[currentIndex + 1];
-      playSong(next);
+    const idx = list.findIndex(s => s.id === currentSong?.id);
+    if (idx !== -1 && idx < list.length - 1) {
+      playSong(list[idx + 1]);
     } else {
       setIsPlaying(false);
     }
@@ -105,10 +106,14 @@ export default function App() {
 
   const categories = ["Hepsi", "Patnoslu Sanatçılar", "Dengbêjler", "Patnos Türküleri", "Sizden Gelenler"];
 
+  const filteredSongs = songs
+    .filter(s => (activeTab === "Hepsi" || s.category === activeTab) && (s.title.toLowerCase().includes(searchTerm.toLowerCase()) || s.artist.toLowerCase().includes(searchTerm.toLowerCase())))
+    .sort((a,b) => (b.likes || 0) - (a.likes || 0))
+    .slice(0, 8);
+
   return (
-    <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '160px' : '40px', fontFamily: 'sans-serif' }}>
+    <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '180px' : '40px', fontFamily: 'sans-serif' }}>
       
-      {/* HEADER (Korundu) */}
       <header style={{ padding: '25px', textAlign: 'center' }}>
         {config.logo && <img src={config.logo} style={{ width: '65px', margin: '0 auto 10px', display: 'block' }} />}
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{config.title}</h1>
@@ -126,7 +131,6 @@ export default function App() {
       <main style={{ maxWidth: '600px', margin: 'auto', padding: '0 15px' }}>
         
         {view === 'admin' ? (
-          /* 🛡️ YÖNETİM PANELİ (BETON GİBİ SABİT) */
           <div style={{ background: '#111', padding: '25px', borderRadius: '20px', border: '1px solid #222' }}>
             {!isAuth ? (
               <input type="password" placeholder="Şifre..." style={inputS} onKeyDown={e => e.key === 'Enter' && (e.currentTarget.value === "Mihriban04" ? setIsAuth(true) : alert("Hatalı!"))} />
@@ -136,7 +140,6 @@ export default function App() {
                 <input placeholder="Banner URL" value={config.banner} onChange={e=>setConfig({...config, banner:e.target.value})} style={inputS}/>
                 <button onClick={() => syncDB(songs, config)} style={saveBtnS}>AYARLARI KAYDET</button>
                 <div style={{marginTop:'30px', paddingTop:'20px', borderTop:'1px solid #222'}}>
-                  <h4 style={{color:'orange'}}>{editingId ? 'Düzenle' : 'Yeni Ekle'}</h4>
                   <input placeholder="Şarkı" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} style={inputS}/>
                   <input placeholder="Sanatçı" value={form.artist} onChange={e=>setForm({...form, artist:e.target.value})} style={inputS}/>
                   <input placeholder="URL" value={form.url} onChange={e=>setForm({...form, url:e.target.value})} style={inputS}/>
@@ -162,7 +165,6 @@ export default function App() {
             )}
           </div>
         ) : view === 'contact' ? (
-          /* 🛡️ İLETİŞİM (Korundu) */
           <div style={{ animation: 'fadeIn 0.5s' }}>
             <div style={{ background: '#111', padding: '30px', borderRadius: '25px', border: '1px solid orange', textAlign: 'center', marginBottom: '20px' }}>
               <h3 style={{ color: 'orange', margin: 0 }}>Gönül Köprümüz</h3>
@@ -174,7 +176,6 @@ export default function App() {
             <button onClick={() => setView('home')} style={{ ...saveBtnS, marginTop: '20px', background: '#222', color: '#fff' }}>GERİ DÖN</button>
           </div>
         ) : (
-          /* 🏠 ANA SAYFA */
           <div>
              {config.banner && <div style={{ width: '100%', height: '170px', borderRadius: '18px', overflow: 'hidden', marginBottom: '20px' }}><img src={config.banner} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
@@ -185,7 +186,7 @@ export default function App() {
              </div>
              <input placeholder="🔍 Ara..." style={searchBarS} onChange={(e) => setSearchTerm(e.target.value)} />
              <div style={{ marginTop: '20px' }}>
-                {songs.filter(s => (activeTab === "Hepsi" || s.category === activeTab) && (s.title.toLowerCase().includes(searchTerm.toLowerCase()) || s.artist.toLowerCase().includes(searchTerm.toLowerCase()))).sort((a,b) => (b.likes || 0) - (a.likes || 0)).slice(0, 8).map(s => (
+                {filteredSongs.map(s => (
                   <div key={s.id} onClick={() => playSong(s)} style={{...songCardS, borderColor: currentSong?.id === s.id ? 'orange' : '#111'}}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <img src={s.cover || config.logo} style={{ width: '45px', height: '45px', borderRadius: '8px' }} />
@@ -193,8 +194,8 @@ export default function App() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{color:'#666', fontSize:'11px'}}>{s.duration}</span>
-                      <button onClick={(e) => {e.stopPropagation(); syncDB(songs.map(i=>i.id===s.id?{...i,likes:(i.likes||0)+1}:i));}} style={{background:'none', border:'none', color:'red'}}>❤️ {s.likes || 0}</button>
-                      <button onClick={(e) => forceDownload(e, s.url, s.title)} style={{background:'none', border:'none', fontSize:'18px'}}>📥</button>
+                      <button onClick={(e) => {e.stopPropagation(); syncDB(songs.map(i=>i.id===s.id?{...i,likes:(i.likes||0)+1}:i));}} style={{background:'none', border:'none', color:'red', cursor:'pointer'}}>❤️ {s.likes || 0}</button>
+                      <button onClick={(e) => forceDownload(e, s.url, s.title)} style={{background:'none', border:'none', fontSize:'18px', cursor:'pointer'}}>📥</button>
                     </div>
                   </div>
                 ))}
@@ -203,19 +204,26 @@ export default function App() {
         )}
       </main>
 
-      {/* 🎵 PLAYER (Yeniden Yapılandırıldı) */}
+      {/* 🎵 PLAYER - KESİN ÇÖZÜM */}
       {currentSong && (
         <div style={playerBarS}>
           <div style={{maxWidth: '600px', margin: 'auto'}}>
             <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'10px'}}>
               <img src={currentSong.cover || config.logo} style={{width:'40px', height:'40px', borderRadius:'5px', border:'1px solid orange'}} />
               <div style={{flex:1, overflow:'hidden'}}><div style={{fontSize:'14px', fontWeight:'bold', color:'orange', whiteSpace:'nowrap'}}>{currentSong.title}</div></div>
-              <button onClick={() => isPlaying ? audioRef.current?.pause() : audioRef.current?.play()} style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px', fontWeight:'bold'}}>
+              <button 
+                onClick={() => {
+                  if (audioRef.current?.paused) audioRef.current.play();
+                  else audioRef.current?.pause();
+                }} 
+                style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px', fontWeight:'bold', cursor:'pointer'}}
+              >
                 {isPlaying ? 'II' : '▶'}
               </button>
             </div>
             <audio 
               ref={audioRef} 
+              src={currentSong.url}
               onEnded={handleNextSong}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
@@ -229,6 +237,7 @@ export default function App() {
   );
 }
 
+// STİLLER (KORUNMUŞ)
 const navBtn = { background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' };
 const activeNav = { ...navBtn, color: 'orange', borderBottom: '2px solid orange' };
 const inputS = { padding: '12px', background: '#080808', border: '1px solid #222', color: '#fff', borderRadius: '10px', width: '100%', marginBottom: '10px' };
