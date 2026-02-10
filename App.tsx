@@ -19,7 +19,7 @@ export default function App() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
 
-  // --- AKILLI YÜKLEME ASİSTANI DURUMLARI ---
+  // --- AKILLI YÜKLEME ASİSTANI ---
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -30,14 +30,12 @@ export default function App() {
   useEffect(() => { 
     loadData();
     
-    // Tarayıcının yükleme isteğini yakala (Android)
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallBanner(true);
     });
 
-    // iPhone kontrolü
     const isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (isApple && !isStandalone) {
@@ -142,14 +140,17 @@ export default function App() {
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '180px' : '40px', fontFamily: 'sans-serif' }}>
       
-      {/* 📲 AKILLI YÜKLEME BANNERI */}
       {showInstallBanner && (
-        <div style={{ background: 'orange', color: '#000', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '13px' }}>
-          <span>{isIOS ? "📲 Paylaş > Ana Ekrana Ekle yaparak yükleyin" : "Patnos Müzik cebinize gelsin!"}</span>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            {!isIOS && <button onClick={handleInstallClick} style={{ background: '#000', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '5px', fontSize: '12px' }}>YÜKLE</button>}
-            <button onClick={() => setShowInstallBanner(false)} style={{ background: 'none', border: 'none', fontSize: '16px', fontWeight: 'bold' }}>✕</button>
-          </div>
+        <div style={{ background: 'orange', color: '#000', padding: '15px 20px', textAlign: 'center', fontWeight: 'bold', fontSize: '13px', borderBottom: '2px solid #000' }}>
+          {isIOS ? (
+            <span>📲 Yüklemek için alttaki <b>Paylaş (⬆️)</b> simgesine dokunun ve <b>"Ana Ekrana Ekle"</b> deyin.</span>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Patnos Müzik cebinize gelsin!</span>
+              <button onClick={handleInstallClick} style={{ background: '#000', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '5px', fontSize: '12px', fontWeight:'bold' }}>YÜKLE</button>
+            </div>
+          )}
+          <button onClick={() => setShowInstallBanner(false)} style={{ position: 'absolute', right: '10px', top: isIOS ? '45px' : '15px', background: 'none', border: 'none', fontSize: '16px', fontWeight: 'bold' }}>✕</button>
         </div>
       )}
 
