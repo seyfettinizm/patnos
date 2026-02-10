@@ -17,11 +17,11 @@ export default function App() {
   const [currentSong, setCurrentSong] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [showAll, setShowAll] = useState(false); // Yeni özellik: Hepsini gör kontrolü
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [form, setForm] = useState({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
 
-  // Verileri yükle (Mevcut verilerine dokunmaz, sadece okur)
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
@@ -38,7 +38,6 @@ export default function App() {
     setConfig(newConfig);
   };
 
-  // --- 🔒 YÖNETİM PANELİ (TAMAMEN KORUMALI) ---
   const handleSaveSong = async () => {
     const audio = new Audio(); audio.src = form.url;
     audio.onloadedmetadata = async () => {
@@ -55,7 +54,6 @@ export default function App() {
     };
   };
 
-  // --- 🎵 PLAYER ONARIMI VE OTOMATİK GEÇİŞ ---
   const playSong = (song: any) => {
     if (currentSong?.id === song.id) {
       if (audioRef.current?.paused) {
@@ -68,7 +66,6 @@ export default function App() {
     } else {
       setCurrentSong(song);
       setIsPlaying(true);
-      // Modern tarayıcılar için güvenli yükleme döngüsü
       setTimeout(() => {
         if (audioRef.current) {
           audioRef.current.pause();
@@ -83,7 +80,6 @@ export default function App() {
     const list = songs
       .filter(s => (activeTab === "Hepsi" || s.category === activeTab))
       .sort((a,b) => (b.likes || 0) - (a.likes || 0));
-    
     const idx = list.findIndex(s => s.id === currentSong?.id);
     if (idx !== -1 && idx < list.length - 1) {
       playSong(list[idx + 1]);
@@ -106,10 +102,12 @@ export default function App() {
 
   const categories = ["Hepsi", "Patnoslu Sanatçılar", "Dengbêjler", "Patnos Türküleri", "Sizden Gelenler"];
 
-  const filteredSongs = songs
+  const allFilteredSongs = songs
     .filter(s => (activeTab === "Hepsi" || s.category === activeTab) && (s.title.toLowerCase().includes(searchTerm.toLowerCase()) || s.artist.toLowerCase().includes(searchTerm.toLowerCase())))
-    .sort((a,b) => (b.likes || 0) - (a.likes || 0))
-    .slice(0, 8);
+    .sort((a,b) => (b.likes || 0) - (a.likes || 0));
+
+  // Ekranda kaç şarkı görüneceğini ayarla
+  const displayedSongs = showAll ? allFilteredSongs : allFilteredSongs.slice(0, 8);
 
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '180px' : '40px', fontFamily: 'sans-serif' }}>
@@ -165,7 +163,7 @@ export default function App() {
             )}
           </div>
         ) : view === 'contact' ? (
-          <div style={{ animation: 'fadeIn 0.5s' }}>
+          <div>
             <div style={{ background: '#111', padding: '30px', borderRadius: '25px', border: '1px solid orange', textAlign: 'center', marginBottom: '20px' }}>
               <h3 style={{ color: 'orange', margin: 0 }}>Gönül Köprümüz</h3>
               <p style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '10px' }}>Müziklerinizi ulaştırın, yayınlayalım!</p>
@@ -180,13 +178,13 @@ export default function App() {
              {config.banner && <div style={{ width: '100%', height: '170px', borderRadius: '18px', overflow: 'hidden', marginBottom: '20px' }}><img src={config.banner} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
                 {categories.map(cat => (
-                  <button key={cat} onClick={() => setActiveTab(cat)} style={activeTab === cat ? activeTabS : tabBtnS}>{cat}</button>
+                  <button key={cat} onClick={() => {setActiveTab(cat); setShowAll(false);}} style={activeTab === cat ? activeTabS : tabBtnS}>{cat}</button>
                 ))}
                 <button onClick={() => setView('contact')} style={{ ...tabBtnS, borderColor: 'orange', color: 'orange' }}>📞 İletişim</button>
              </div>
              <input placeholder="🔍 Ara..." style={searchBarS} onChange={(e) => setSearchTerm(e.target.value)} />
              <div style={{ marginTop: '20px' }}>
-                {filteredSongs.map(s => (
+                {displayedSongs.map(s => (
                   <div key={s.id} onClick={() => playSong(s)} style={{...songCardS, borderColor: currentSong?.id === s.id ? 'orange' : '#111'}}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <img src={s.cover || config.logo} style={{ width: '45px', height: '45px', borderRadius: '8px' }} />
@@ -200,11 +198,22 @@ export default function App() {
                   </div>
                 ))}
              </div>
+
+             {/* Yeni Butonlar: Tümünü Gör / Daha Az Göster */}
+             {!showAll && allFilteredSongs.length > 8 && (
+                <button onClick={() => setShowAll(true)} style={{...saveBtnS, background: 'none', border: '1px solid orange', color: 'orange', marginTop: '10px'}}>
+                  👇 Tümünü Gör ({allFilteredSongs.length} Şarkı)
+                </button>
+             )}
+             {showAll && (
+                <button onClick={() => setShowAll(false)} style={{...saveBtnS, background: 'none', border: '1px solid #222', color: '#666', marginTop: '10px'}}>
+                  👆 Daha Az Göster
+                </button>
+             )}
           </div>
         )}
       </main>
 
-      {/* 🎵 PLAYER - KESİN ÇÖZÜM */}
       {currentSong && (
         <div style={playerBarS}>
           <div style={{maxWidth: '600px', margin: 'auto'}}>
@@ -237,7 +246,6 @@ export default function App() {
   );
 }
 
-// STİLLER (KORUNMUŞ)
 const navBtn = { background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' };
 const activeNav = { ...navBtn, color: 'orange', borderBottom: '2px solid orange' };
 const inputS = { padding: '12px', background: '#080808', border: '1px solid #222', color: '#fff', borderRadius: '10px', width: '100%', marginBottom: '10px' };
