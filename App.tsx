@@ -17,12 +17,43 @@ export default function App() {
   const [currentSong, setCurrentSong] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [showAll, setShowAll] = useState(false); // Yeni özellik: Hepsini gör kontrolü
+  const [showAll, setShowAll] = useState(false);
+
+  // --- AKILLI YÜKLEME ASİSTANI DURUMLARI ---
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [form, setForm] = useState({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { 
+    loadData();
+    
+    // Tarayıcının yükleme isteğini yakala (Android)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    });
+
+    // iPhone kontrolü
+    const isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isApple && !isStandalone) {
+      setIsIOS(true);
+      setShowInstallBanner(true);
+    }
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    }
+  };
 
   const loadData = async () => {
     const { data } = await supabase.from('settings').select('value').eq('id', 'app_data').single();
@@ -106,12 +137,22 @@ export default function App() {
     .filter(s => (activeTab === "Hepsi" || s.category === activeTab) && (s.title.toLowerCase().includes(searchTerm.toLowerCase()) || s.artist.toLowerCase().includes(searchTerm.toLowerCase())))
     .sort((a,b) => (b.likes || 0) - (a.likes || 0));
 
-  // Ekranda kaç şarkı görüneceğini ayarla
   const displayedSongs = showAll ? allFilteredSongs : allFilteredSongs.slice(0, 8);
 
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '180px' : '40px', fontFamily: 'sans-serif' }}>
       
+      {/* 📲 AKILLI YÜKLEME BANNERI */}
+      {showInstallBanner && (
+        <div style={{ background: 'orange', color: '#000', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '13px' }}>
+          <span>{isIOS ? "📲 Paylaş > Ana Ekrana Ekle yaparak yükleyin" : "Patnos Müzik cebinize gelsin!"}</span>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {!isIOS && <button onClick={handleInstallClick} style={{ background: '#000', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '5px', fontSize: '12px' }}>YÜKLE</button>}
+            <button onClick={() => setShowInstallBanner(false)} style={{ background: 'none', border: 'none', fontSize: '16px', fontWeight: 'bold' }}>✕</button>
+          </div>
+        </div>
+      )}
+
       <header style={{ padding: '25px', textAlign: 'center' }}>
         {config.logo && <img src={config.logo} style={{ width: '65px', margin: '0 auto 10px', display: 'block' }} />}
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{config.title}</h1>
@@ -199,7 +240,6 @@ export default function App() {
                 ))}
              </div>
 
-             {/* Yeni Butonlar: Tümünü Gör / Daha Az Göster */}
              {!showAll && allFilteredSongs.length > 8 && (
                 <button onClick={() => setShowAll(true)} style={{...saveBtnS, background: 'none', border: '1px solid orange', color: 'orange', marginTop: '10px'}}>
                   👇 Tümünü Gör ({allFilteredSongs.length} Şarkı)
@@ -220,25 +260,11 @@ export default function App() {
             <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'10px'}}>
               <img src={currentSong.cover || config.logo} style={{width:'40px', height:'40px', borderRadius:'5px', border:'1px solid orange'}} />
               <div style={{flex:1, overflow:'hidden'}}><div style={{fontSize:'14px', fontWeight:'bold', color:'orange', whiteSpace:'nowrap'}}>{currentSong.title}</div></div>
-              <button 
-                onClick={() => {
-                  if (audioRef.current?.paused) audioRef.current.play();
-                  else audioRef.current?.pause();
-                }} 
-                style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px', fontWeight:'bold', cursor:'pointer'}}
-              >
+              <button onClick={() => { if (audioRef.current?.paused) audioRef.current.play(); else audioRef.current?.pause(); }} style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px', fontWeight:'bold', cursor:'pointer'}}>
                 {isPlaying ? 'II' : '▶'}
               </button>
             </div>
-            <audio 
-              ref={audioRef} 
-              src={currentSong.url}
-              onEnded={handleNextSong}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              controls 
-              style={{width:'100%', height:'32px', filter:'invert(1)'}} 
-            />
+            <audio ref={audioRef} src={currentSong.url} onEnded={handleNextSong} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} controls style={{width:'100%', height:'32px', filter:'invert(1)'}} />
           </div>
         </div>
       )}
