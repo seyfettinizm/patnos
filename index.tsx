@@ -21,9 +21,9 @@ function App() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
 
-  // PWA ve Yükleme Bildirimi Durumları
+  // PWA ve Akıllı Yükleme Bildirimi
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showInstallBanner, setShowInstallBanner] = useState(true);
   const [isIOS, setIsIOS] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -32,19 +32,22 @@ function App() {
   useEffect(() => { 
     loadData();
     
-    // Android Yükleme Yakalayıcı
+    // Tarayıcı yükleme isteği hazırlığı (Android/PC)
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowInstallBanner(true);
     });
 
-    // iPhone (iOS) Tespiti
+    // iPhone (iOS) ve Tarayıcı Tespiti
     const isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    if (isApple && !isStandalone) {
+    if (isApple) {
       setIsIOS(true);
-      setShowInstallBanner(true);
+    }
+    
+    // Eğer uygulama zaten yüklüyse şeridi gizle
+    if (isStandalone) {
+      setShowInstallBanner(false);
     }
   }, []);
 
@@ -135,23 +138,25 @@ function App() {
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '180px' : '40px', fontFamily: 'sans-serif' }}>
       
-      {/* AKILLI YÜKLEME ŞERİDİ (iOS ve Android İçin) */}
+      {/* 📱 AKILLI YÜKLEME ŞERİDİ (Geliştirilmiş) */}
       {showInstallBanner && (
         <div style={{ background: 'orange', color: '#000', padding: '12px 15px', textAlign: 'center', fontWeight: 'bold', fontSize: '13px', position: 'relative', borderBottom: '2px solid #000', zIndex: 2000 }}>
           {isIOS ? (
-            <span>📲 iPhone'a yüklemek için alttaki <b>'Paylaş'</b> (yukarı ok) simgesine dokunun ve <b>'Ana Ekrana Ekle'</b>yi seçin.</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <span>📲 iPhone Yükle: Alttaki <b>'Paylaş'</b> simgesine dokunup <b>'Ana Ekrana Ekle'</b>yi seçin.</span>
+            </div>
           ) : (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '500px', margin: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '600px', margin: 'auto' }}>
               <span>Patnos Müzik cebinize gelsin!</span>
               <button onClick={handleInstallClick} style={{ background: '#000', color: '#fff', border: 'none', padding: '6px 15px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>YÜKLE</button>
             </div>
           )}
-          <button onClick={() => setShowInstallBanner(false)} style={{ position: 'absolute', right: '10px', top: '12px', background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
+          <button onClick={() => setShowInstallBanner(false)} style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
         </div>
       )}
 
       <header style={{ padding: '25px', textAlign: 'center' }}>
-        {config.logo && <img src={config.logo} style={{ width: '65px', margin: '0 auto 10px', display: 'block' }} />}
+        {config.logo && <img src={config.logo} style={{ width: '65px', margin: '0 auto 10px', display: 'block' }} alt="Logo" />}
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{config.title}</h1>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginTop: '8px' }}>
           <div style={{ height: '2px', width: '35px', background: 'linear-gradient(to right, transparent, orange)' }}></div>
@@ -214,7 +219,7 @@ function App() {
           </div>
         ) : (
           <div>
-             {config.banner && <img src={config.banner} style={{ width: '100%', height: '170px', borderRadius: '18px', objectFit: 'cover', marginBottom: '20px' }} />}
+             {config.banner && <img src={config.banner} style={{ width: '100%', height: '170px', borderRadius: '18px', objectFit: 'cover', marginBottom: '20px' }} alt="Banner" />}
              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
                 {categories.map(cat => (
                   <button key={cat} onClick={() => {setActiveTab(cat); setShowAll(false);}} style={activeTab === cat ? activeTabS : tabBtnS}>{cat}</button>
@@ -226,15 +231,15 @@ function App() {
                 {displayedSongs.map(s => (
                   <div key={s.id} onClick={() => playSong(s)} style={{...songCardS, borderColor: currentSong?.id === s.id ? 'orange' : '#111'}}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <img src={s.cover || config.logo} style={{ width: '45px', height: '45px', borderRadius: '8px' }} />
+                      <img src={s.cover || config.logo} style={{ width: '45px', height: '45px', borderRadius: '8px', objectFit: 'cover' }} alt="Cover" />
                       <div>
                         <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{s.title}</div>
                         <div style={{ color: '#555', fontSize: '11px' }}>{s.artist} - {s.duration}</div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
-                      <button onClick={(e) => {e.stopPropagation(); syncDB(songs.map(i=>i.id===s.id?{...i,likes:(i.likes||0)+1}:i));}} style={{background:'none', border:'none', color:'red'}}>❤️ {s.likes || 0}</button>
-                      <button onClick={(e) => forceDownload(e, s.url, s.title)} style={{background:'none', border:'none', fontSize:'18px'}}>📥</button>
+                      <button onClick={(e) => {e.stopPropagation(); syncDB(songs.map(i=>i.id===s.id?{...i,likes:(i.likes||0)+1}:i));}} style={{background:'none', border:'none', color:'red', cursor: 'pointer'}}>❤️ {s.likes || 0}</button>
+                      <button onClick={(e) => forceDownload(e, s.url, s.title)} style={{background:'none', border:'none', fontSize:'18px', cursor: 'pointer'}}>📥</button>
                     </div>
                   </div>
                 ))}
@@ -248,9 +253,9 @@ function App() {
         <div style={playerBarS}>
           <div style={{maxWidth: '600px', margin: 'auto'}}>
             <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'10px'}}>
-              <img src={currentSong.cover || config.logo} style={{width:'40px', height:'40px', borderRadius:'5px'}} />
-              <div style={{flex:1}}><div style={{fontSize:'14px', color:'orange'}}>{currentSong.title}</div></div>
-              <button onClick={() => playSong(currentSong)} style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px', fontWeight:'bold'}}>{isPlaying ? 'II' : '▶'}</button>
+              <img src={currentSong.cover || config.logo} style={{width:'40px', height:'40px', borderRadius:'5px'}} alt="Now Playing" />
+              <div style={{flex:1}}><div style={{fontSize:'14px', color:'orange', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{currentSong.title}</div></div>
+              <button onClick={() => playSong(currentSong)} style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px', fontWeight:'bold', cursor: 'pointer'}}>{isPlaying ? 'II' : '▶'}</button>
             </div>
             <audio ref={audioRef} src={currentSong.url} onEnded={handleNextSong} onPlay={()=>setIsPlaying(true)} onPause={()=>setIsPlaying(false)} controls style={{width:'100%', filter:'invert(1)'}} />
           </div>
@@ -260,6 +265,7 @@ function App() {
   );
 }
 
+// Stiller
 const navBtn = { background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' };
 const activeNav = { ...navBtn, color: 'orange', borderBottom: '2px solid orange' };
 const inputS = { padding: '12px', background: '#080808', border: '1px solid #222', color: '#fff', borderRadius: '10px', width: '100%', marginBottom: '10px' };
