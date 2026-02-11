@@ -21,9 +21,9 @@ function App() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
 
-  // PWA ve Akıllı Yükleme Bildirimi
+  // Yükleme Bildirimi ve Cihaz Tespiti
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(true);
+  const [showInstallPopup, setShowInstallPopup] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -32,23 +32,15 @@ function App() {
   useEffect(() => { 
     loadData();
     
-    // Tarayıcı yükleme isteği hazırlığı (Android/PC)
+    // Android yükleme tetikleyicisi
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
     });
 
-    // iPhone (iOS) ve Tarayıcı Tespiti
+    // iPhone (iOS) tespiti
     const isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    if (isApple) {
-      setIsIOS(true);
-    }
-    
-    // Eğer uygulama zaten yüklüyse şeridi gizle
-    if (isStandalone) {
-      setShowInstallBanner(false);
-    }
+    if (isApple) setIsIOS(true);
   }, []);
 
   const loadData = async () => {
@@ -66,11 +58,17 @@ function App() {
   };
 
   const handleInstallClick = async () => {
-    if (deferredPrompt) {
+    if (isIOS) {
+      // iPhone ise sadece bilgi kutusunu aç
+      setShowInstallPopup(true);
+    } else if (deferredPrompt) {
+      // Android ise doğrudan yükleme sistemini başlat
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') setDeferredPrompt(null);
-      setShowInstallBanner(false);
+    } else {
+      // Diğer durumlarda bilgi kutusunu göster
+      setShowInstallPopup(true);
     }
   };
 
@@ -138,20 +136,30 @@ function App() {
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '180px' : '40px', fontFamily: 'sans-serif' }}>
       
-      {/* 📱 AKILLI YÜKLEME ŞERİDİ (Geliştirilmiş) */}
-      {showInstallBanner && (
-        <div style={{ background: 'orange', color: '#000', padding: '12px 15px', textAlign: 'center', fontWeight: 'bold', fontSize: '13px', position: 'relative', borderBottom: '2px solid #000', zIndex: 2000 }}>
-          {isIOS ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              <span>📲 iPhone Yükle: Alttaki <b>'Paylaş'</b> simgesine dokunup <b>'Ana Ekrana Ekle'</b>yi seçin.</span>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '600px', margin: 'auto' }}>
-              <span>Patnos Müzik cebinize gelsin!</span>
-              <button onClick={handleInstallClick} style={{ background: '#000', color: '#fff', border: 'none', padding: '6px 15px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>YÜKLE</button>
-            </div>
-          )}
-          <button onClick={() => setShowInstallBanner(false)} style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
+      {/* 📱 ÜST TURUNCU ŞERİT */}
+      <div style={{ background: 'orange', color: '#000', padding: '12px 15px', textAlign: 'center', fontWeight: 'bold', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Patnos Müzik cebinize gelsin!</span>
+        <button onClick={handleInstallClick} style={{ background: '#000', color: '#fff', border: 'none', padding: '6px 15px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>YÜKLE</button>
+      </div>
+
+      {/* ℹ️ AKILLI YÜKLEME BİLGİ KUTUSU (Popup) */}
+      {showInstallPopup && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#111', border: '2px solid orange', borderRadius: '20px', padding: '25px', maxWidth: '400px', textAlign: 'center' }}>
+            <h3 style={{ color: 'orange', marginBottom: '15px' }}>Uygulamayı Yükleyin</h3>
+            
+            {isIOS ? (
+              <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                <p>iPhone cihazınıza yüklemek için:</p>
+                <p>1️⃣ Tarayıcınızın altındaki <b>'Paylaş'</b> (yukarı ok) simgesine dokunun.</p>
+                <p>2️⃣ Açılan listeden <b>'Ana Ekrana Ekle'</b> seçeneğini bulun ve seçin.</p>
+              </div>
+            ) : (
+              <p>Android cihazınızda yükleme penceresi açılmadıysa tarayıcı menüsünden 'Uygulamayı Yükle' seçeneğini kullanabilirsiniz.</p>
+            )}
+
+            <button onClick={() => setShowInstallPopup(false)} style={{ marginTop: '20px', background: 'orange', border: 'none', padding: '10px 30px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>ANLADIM</button>
+          </div>
         </div>
       )}
 
@@ -265,7 +273,7 @@ function App() {
   );
 }
 
-// Stiller
+// Görsel Stiller
 const navBtn = { background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' };
 const activeNav = { ...navBtn, color: 'orange', borderBottom: '2px solid orange' };
 const inputS = { padding: '12px', background: '#080808', border: '1px solid #222', color: '#fff', borderRadius: '10px', width: '100%', marginBottom: '10px' };
