@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase Bağlantısı
+// Supabase Bağlantısı (Ayarlar korunuyor)
 const supabase = createClient(
   'https://docdtizfqeolqwwfaiyi.supabase.co', 
   'sb_publishable_0TzP8UOehq9blzjKfAQULQ_3zxLCE80'
@@ -31,14 +31,10 @@ function App() {
 
   useEffect(() => { 
     loadData();
-    
-    // Android yükleme tetikleyicisi
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
     });
-
-    // iPhone (iOS) tespiti
     const isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     if (isApple) setIsIOS(true);
   }, []);
@@ -58,17 +54,13 @@ function App() {
   };
 
   const handleInstallClick = async () => {
-    if (isIOS) {
-      // iPhone ise sadece bilgi kutusunu aç
-      setShowInstallPopup(true);
-    } else if (deferredPrompt) {
-      // Android ise doğrudan yükleme sistemini başlat
+    if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') setDeferredPrompt(null);
+      setShowInstallPopup(false);
     } else {
-      // Diğer durumlarda bilgi kutusunu göster
-      setShowInstallPopup(true);
+      alert("Yükleme penceresi şu an açılamıyor. Lütfen tarayıcı menüsünü kullanın.");
     }
   };
 
@@ -86,7 +78,6 @@ function App() {
       setEditingId(null);
       alert("Başarıyla Kaydedildi!");
     };
-
     const audio = new Audio();
     audio.src = form.url;
     const timeout = setTimeout(() => { saveProcess("Süre Belirsiz"); }, 3000);
@@ -139,26 +130,35 @@ function App() {
       {/* 📱 ÜST TURUNCU ŞERİT */}
       <div style={{ background: 'orange', color: '#000', padding: '12px 15px', textAlign: 'center', fontWeight: 'bold', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>Patnos Müzik cebinize gelsin!</span>
-        <button onClick={handleInstallClick} style={{ background: '#000', color: '#fff', border: 'none', padding: '6px 15px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>YÜKLE</button>
+        <button onClick={() => setShowInstallPopup(true)} style={{ background: '#000', color: '#fff', border: 'none', padding: '6px 15px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>YÜKLE</button>
       </div>
 
-      {/* ℹ️ AKILLI YÜKLEME BİLGİ KUTUSU (Popup) */}
+      {/* ℹ️ YENİ TASARIMLI YÜKLEME KUTUSU (Görseldeki gibi) */}
       {showInstallPopup && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: '#111', border: '2px solid orange', borderRadius: '20px', padding: '25px', maxWidth: '400px', textAlign: 'center' }}>
-            <h3 style={{ color: 'orange', marginBottom: '15px' }}>Uygulamayı Yükleyin</h3>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px' }}>
+          <div style={{ background: '#fff', borderRadius: '15px', width: '100%', maxWidth: '400px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
             
-            {isIOS ? (
-              <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                <p>iPhone cihazınıza yüklemek için:</p>
-                <p>1️⃣ Tarayıcınızın altındaki <b>'Paylaş'</b> (yukarı ok) simgesine dokunun.</p>
-                <p>2️⃣ Açılan listeden <b>'Ana Ekrana Ekle'</b> seçeneğini bulun ve seçin.</p>
-              </div>
-            ) : (
-              <p>Android cihazınızda yükleme penceresi açılmadıysa tarayıcı menüsünden 'Uygulamayı Yükle' seçeneğini kullanabilirsiniz.</p>
-            )}
+            {/* Header Bölümü */}
+            <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px', borderBottom: '1px solid #eee' }}>
+              <img src={config.logo || "https://docdtizfqeolqwwfaiyi.supabase.co/storage/v1/object/public/songs/music_icon.png"} style={{ width: '50px', height: '50px', borderRadius: '10px' }} alt="icon" />
+              <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#000' }}>Patnos Müzik Uygulaması</span>
+            </div>
 
-            <button onClick={() => setShowInstallPopup(false)} style={{ marginTop: '20px', background: 'orange', border: 'none', padding: '10px 30px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>ANLADIM</button>
+            {/* Android Satırı */}
+            <div style={{ background: '#ffcc80', margin: '15px', padding: '10px 15px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <span style={{ color: '#000', fontSize: '24px', fontWeight: '900' }}>Android:</span>
+               <button onClick={handleInstallClick} style={{ background: '#42a5f5', color: '#fff', border: 'none', padding: '8px 25px', borderRadius: '5px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}>Yükle</button>
+            </div>
+
+            {/* iPhone Satırı */}
+            <div style={{ background: '#ffcc80', margin: '15px', padding: '15px', borderRadius: '10px' }}>
+               <div style={{ color: '#000', fontSize: '24px', fontWeight: '900', marginBottom: '8px' }}>iPhone:</div>
+               <div style={{ color: '#000', fontSize: '15px', fontWeight: 'bold', lineHeight: '1.4' }}>
+                  Paylaş simgesine dokunup <br/> "Ana Ekrana Ekle"yi seçin.
+               </div>
+            </div>
+
+            <button onClick={() => setShowInstallPopup(false)} style={{ width: '100%', padding: '15px', background: '#333', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>KAPAT</button>
           </div>
         </div>
       )}
@@ -178,7 +178,6 @@ function App() {
       </header>
 
       <main style={{ maxWidth: '600px', margin: 'auto', padding: '0 15px' }}>
-        
         {view === 'admin' ? (
           <div style={{ background: '#111', padding: '25px', borderRadius: '20px', border: '1px solid #222' }}>
             {!isAuth ? (
@@ -189,7 +188,6 @@ function App() {
                 <input placeholder="Logo URL" value={config.logo} onChange={e=>setConfig({...config, logo:e.target.value})} style={inputS}/>
                 <input placeholder="Banner URL" value={config.banner} onChange={e=>setConfig({...config, banner:e.target.value})} style={inputS}/>
                 <button onClick={() => syncDB(songs, config)} style={saveBtnS}>AYARLARI KAYDET</button>
-                
                 <h3 style={{color: 'orange', marginTop: '30px'}}>Yeni Şarkı Ekle</h3>
                 <input placeholder="Şarkı Adı" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} style={inputS}/>
                 <input placeholder="Sanatçı" value={form.artist} onChange={e=>setForm({...form, artist:e.target.value})} style={inputS}/>
@@ -199,7 +197,6 @@ function App() {
                   {categories.filter(c=>c!=="Hepsi").map(c=><option key={c} value={c}>{c}</option>)}
                 </select>
                 <button onClick={handleSaveSong} style={saveBtnS}>{editingId ? 'GÜNCELLE' : 'LİSTEYE EKLE'}</button>
-
                 <div style={{marginTop: '30px'}}>
                   <input placeholder="🔍 Listede Ara..." style={{...inputS, borderColor: 'orange'}} onChange={(e) => setAdminSearchTerm(e.target.value)} />
                   {songs.filter(s => s.title.toLowerCase().includes(adminSearchTerm.toLowerCase())).map(s => (
