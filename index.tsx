@@ -21,7 +21,7 @@ function App() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
 
-  // PWA ve Yükleme Bildirimi
+  // PWA ve Yükleme Bildirimi Durumları
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -31,13 +31,18 @@ function App() {
 
   useEffect(() => { 
     loadData();
+    
+    // Android Yükleme Yakalayıcı
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallBanner(true);
     });
+
+    // iPhone (iOS) Tespiti
     const isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    if (isApple && !window.matchMedia('(display-mode: standalone)').matches) {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isApple && !isStandalone) {
       setIsIOS(true);
       setShowInstallBanner(true);
     }
@@ -55,6 +60,15 @@ function App() {
     await supabase.from('settings').update({ value: { songs: newSongs, config: newConfig } }).eq('id', 'app_data');
     setSongs(newSongs);
     setConfig(newConfig);
+  };
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    }
   };
 
   const handleSaveSong = async () => {
@@ -121,11 +135,18 @@ function App() {
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '180px' : '40px', fontFamily: 'sans-serif' }}>
       
-      {/* Üst Bildirim Alanı */}
+      {/* AKILLI YÜKLEME ŞERİDİ (iOS ve Android İçin) */}
       {showInstallBanner && (
-        <div style={{ background: 'orange', color: '#000', padding: '15px', textAlign: 'center', fontWeight: 'bold' }}>
-          {isIOS ? "📲 Paylaş -> Ana Ekrana Ekle yapın." : "Patnos Müzik cebinize gelsin!"}
-          <button onClick={() => setShowInstallBanner(false)} style={{ float: 'right', background: 'none', border: 'none', fontWeight: 'bold' }}>✕</button>
+        <div style={{ background: 'orange', color: '#000', padding: '12px 15px', textAlign: 'center', fontWeight: 'bold', fontSize: '13px', position: 'relative', borderBottom: '2px solid #000', zIndex: 2000 }}>
+          {isIOS ? (
+            <span>📲 iPhone'a yüklemek için alttaki <b>'Paylaş'</b> (yukarı ok) simgesine dokunun ve <b>'Ana Ekrana Ekle'</b>yi seçin.</span>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '500px', margin: 'auto' }}>
+              <span>Patnos Müzik cebinize gelsin!</span>
+              <button onClick={handleInstallClick} style={{ background: '#000', color: '#fff', border: 'none', padding: '6px 15px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>YÜKLE</button>
+            </div>
+          )}
+          <button onClick={() => setShowInstallBanner(false)} style={{ position: 'absolute', right: '10px', top: '12px', background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
         </div>
       )}
 
@@ -249,5 +270,8 @@ const activeTabS = { ...tabBtnS, background: 'orange', color: '#000', borderColo
 const songCardS = { background: '#080808', padding: '10px 15px', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', border: '1px solid #111', cursor: 'pointer' };
 const playerBarS = { position: 'fixed' as 'fixed', bottom: 0, width: '100%', background: 'rgba(5,5,5,0.95)', padding: '15px 20px', borderTop: '2px solid orange', zIndex: 1000 };
 
-const root = createRoot(document.getElementById('root')!);
-root.render(<App />);
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  const root = createRoot(rootElement);
+  root.render(<App />);
+}
