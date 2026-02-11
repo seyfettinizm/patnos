@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase Bağlantısı (Ayarlar korunuyor)
+// Supabase Bağlantısı (Sabit ve korumalı)
 const supabase = createClient(
   'https://docdtizfqeolqwwfaiyi.supabase.co', 
   'sb_publishable_0TzP8UOehq9blzjKfAQULQ_3zxLCE80'
@@ -21,7 +21,7 @@ function App() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
 
-  // Yükleme Bildirimi ve Cihaz Tespiti
+  // Yükleme Bildirimi Durumları
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallPopup, setShowInstallPopup] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -127,37 +127,28 @@ function App() {
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh', paddingBottom: currentSong ? '180px' : '40px', fontFamily: 'sans-serif' }}>
       
-      {/* 📱 ÜST TURUNCU ŞERİT */}
+      {/* 📱 ÜST TURUNCU ŞERİT (Sabit) */}
       <div style={{ background: 'orange', color: '#000', padding: '12px 15px', textAlign: 'center', fontWeight: 'bold', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>Patnos Müzik cebinize gelsin!</span>
         <button onClick={() => setShowInstallPopup(true)} style={{ background: '#000', color: '#fff', border: 'none', padding: '6px 15px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>YÜKLE</button>
       </div>
 
-      {/* ℹ️ YENİ TASARIMLI YÜKLEME KUTUSU (Görseldeki gibi) */}
+      {/* ℹ️ YÜKLEME KUTUSU (Sabit) */}
       {showInstallPopup && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px' }}>
           <div style={{ background: '#fff', borderRadius: '15px', width: '100%', maxWidth: '400px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-            
-            {/* Header Bölümü */}
             <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px', borderBottom: '1px solid #eee' }}>
               <img src={config.logo || "https://docdtizfqeolqwwfaiyi.supabase.co/storage/v1/object/public/songs/music_icon.png"} style={{ width: '50px', height: '50px', borderRadius: '10px' }} alt="icon" />
               <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#000' }}>Patnos Müzik Uygulaması</span>
             </div>
-
-            {/* Android Satırı */}
             <div style={{ background: '#ffcc80', margin: '15px', padding: '10px 15px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                <span style={{ color: '#000', fontSize: '24px', fontWeight: '900' }}>Android:</span>
                <button onClick={handleInstallClick} style={{ background: '#42a5f5', color: '#fff', border: 'none', padding: '8px 25px', borderRadius: '5px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}>Yükle</button>
             </div>
-
-            {/* iPhone Satırı */}
             <div style={{ background: '#ffcc80', margin: '15px', padding: '15px', borderRadius: '10px' }}>
                <div style={{ color: '#000', fontSize: '24px', fontWeight: '900', marginBottom: '8px' }}>iPhone:</div>
-               <div style={{ color: '#000', fontSize: '15px', fontWeight: 'bold', lineHeight: '1.4' }}>
-                  Paylaş simgesine dokunup <br/> "Ana Ekrana Ekle"yi seçin.
-               </div>
+               <div style={{ color: '#000', fontSize: '15px', fontWeight: 'bold', lineHeight: '1.4' }}>Paylaş simgesine dokunup <br/> "Ana Ekrana Ekle"yi seçin.</div>
             </div>
-
             <button onClick={() => setShowInstallPopup(false)} style={{ width: '100%', padding: '15px', background: '#333', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>KAPAT</button>
           </div>
         </div>
@@ -178,6 +169,7 @@ function App() {
       </header>
 
       <main style={{ maxWidth: '600px', margin: 'auto', padding: '0 15px' }}>
+        
         {view === 'admin' ? (
           <div style={{ background: '#111', padding: '25px', borderRadius: '20px', border: '1px solid #222' }}>
             {!isAuth ? (
@@ -213,14 +205,49 @@ function App() {
             )}
           </div>
         ) : view === 'contact' ? (
-          <div style={{textAlign: 'center'}}>
-            <div style={{ background: '#111', padding: '30px', borderRadius: '25px', border: '1px solid orange', marginBottom: '20px' }}>
-              <h3 style={{ color: 'orange' }}>İletişim Bilgileri</h3>
-              <p>📍 Yeşilbağlar Mh. 637/33 Sk. NO:25 Buca/İZMİR</p>
-              <p>📧 patnosumuz@gmail.com</p>
-              <p style={{color: '#25D366'}}>🟢 WhatsApp: +90 505 225 06 55</p>
+          <div style={{ animation: 'fadeIn 0.5s ease' }}>
+            {/* 🎨 DUYGUSAL ÇAĞRI KUTUSU */}
+            <div style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #000 100%)', padding: '30px', borderRadius: '25px', border: '1px solid orange', marginBottom: '25px', textAlign: 'center', boxShadow: '0 10px 20px rgba(255,165,0,0.1)' }}>
+              <h2 style={{ color: 'orange', fontSize: '22px', marginBottom: '15px' }}>Sesiniz Kültürümüzdür!</h2>
+              <p style={{ color: '#ccc', fontSize: '15px', lineHeight: '1.6', fontStyle: 'italic' }}>
+                "Patnos'un tozlu yollarından, İzmir'in kalbine taşıdığımız bu ezgileri birlikte yaşatalım. Kendi kayıtlarınızı, saklı kalmış türkülerinizi bizimle paylaşın; bu müzik kutusu sizin sesinizle dolsun."
+              </p>
+              <div style={{ marginTop: '15px', color: 'orange', fontWeight: 'bold' }}>👇 Bizimle Buradan Bağ kurun 👇</div>
             </div>
-            <button onClick={() => setView('home')} style={saveBtnS}>GERİ DÖN</button>
+
+            {/* 📦 3'LÜ İLETİŞİM KUTULARI */}
+            <div style={{ display: 'grid', gap: '15px', marginBottom: '25px' }}>
+              {/* Adres Kutusu */}
+              <div style={{ background: '#111', padding: '20px', borderRadius: '20px', borderLeft: '5px solid #42a5f5', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div style={{ fontSize: '25px' }}>📍</div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#555', fontWeight: 'bold' }}>ADRESİMİZ</div>
+                  <div style={{ fontSize: '14px' }}>Yeşilbağlar Mh. 637/33 Sk. NO:25 Buca/İZMİR</div>
+                </div>
+              </div>
+
+              {/* E-Posta Kutusu */}
+              <div style={{ background: '#111', padding: '20px', borderRadius: '20px', borderLeft: '5px solid orange', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div style={{ fontSize: '25px' }}>📧</div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#555', fontWeight: 'bold' }}>E-POSTA</div>
+                  <div style={{ fontSize: '14px' }}>patnosumuz@gmail.com</div>
+                </div>
+              </div>
+
+              {/* WhatsApp Kutusu */}
+              <a href="https://wa.me/905052250655" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ background: '#111', padding: '20px', borderRadius: '20px', borderLeft: '5px solid #25D366', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', transition: 'transform 0.2s' }}>
+                  <div style={{ fontSize: '25px' }}>🟢</div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#555', fontWeight: 'bold' }}>WHATSAPP HATTIMIZ</div>
+                    <div style={{ fontSize: '14px', color: '#25D366', fontWeight: 'bold' }}>+90 505 225 06 55</div>
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <button onClick={() => setView('home')} style={saveBtnS}>ANA SAYFAYA DÖN</button>
           </div>
         ) : (
           <div>
@@ -229,7 +256,7 @@ function App() {
                 {categories.map(cat => (
                   <button key={cat} onClick={() => {setActiveTab(cat); setShowAll(false);}} style={activeTab === cat ? activeTabS : tabBtnS}>{cat}</button>
                 ))}
-                <button onClick={() => setView('contact')} style={{ ...tabBtnS, borderColor: 'orange', color: 'orange' }}>📞 İletişim</button>
+                <button onClick={() => setView('contact')} style={{ ...tabBtnS, borderColor: 'orange', color: 'orange', borderStyle: 'dashed' }}>📞 İletişim & Gönder</button>
              </div>
              <input placeholder="🔍 Şarkı veya sanatçı ara..." style={searchBarS} onChange={(e) => setSearchTerm(e.target.value)} />
              <div style={{ marginTop: '20px' }}>
@@ -270,7 +297,7 @@ function App() {
   );
 }
 
-// Görsel Stiller
+// Görsel Stiller (Korumalı)
 const navBtn = { background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' };
 const activeNav = { ...navBtn, color: 'orange', borderBottom: '2px solid orange' };
 const inputS = { padding: '12px', background: '#080808', border: '1px solid #222', color: '#fff', borderRadius: '10px', width: '100%', marginBottom: '10px' };
