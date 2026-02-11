@@ -67,19 +67,42 @@ export default function App() {
     setConfig(newConfig);
   };
 
+  // --- TAMİR EDİLEN KAYDETME FONKSİYONU ---
   const handleSaveSong = async () => {
-    const audio = new Audio(); audio.src = form.url;
-    audio.onloadedmetadata = async () => {
-      const min = Math.floor(audio.duration / 60);
-      const sec = Math.floor(audio.duration % 60);
-      const duration = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    if (!form.title || !form.url) {
+      alert("Lütfen en azından Şarkı Adı ve URL alanlarını doldurun!");
+      return;
+    }
+
+    const saveProcess = async (duration = "0:00") => {
       let updatedSongs = editingId 
         ? songs.map(s => s.id === editingId ? { ...form, id: editingId, duration, likes: s.likes || 0 } : s)
         : [{ ...form, id: Date.now(), duration, likes: 0 }, ...songs];
+      
       await syncDB(updatedSongs);
       setForm({ title: '', artist: '', url: '', cover: '', category: 'Patnoslu Sanatçılar' });
       setEditingId(null);
       alert("İşlem Başarılı!");
+    };
+
+    const audio = new Audio();
+    audio.src = form.url;
+    
+    const timeout = setTimeout(() => {
+      saveProcess("Süre Belirsiz");
+    }, 3000);
+
+    audio.onloadedmetadata = () => {
+      clearTimeout(timeout);
+      const min = Math.floor(audio.duration / 60);
+      const sec = Math.floor(audio.duration % 60);
+      const duration = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+      saveProcess(duration);
+    };
+
+    audio.onerror = () => {
+      clearTimeout(timeout);
+      saveProcess("Hatalı Link");
     };
   };
 
@@ -259,28 +282,4 @@ export default function App() {
         <div style={playerBarS}>
           <div style={{maxWidth: '600px', margin: 'auto'}}>
             <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'10px'}}>
-              <img src={currentSong.cover || config.logo} style={{width:'40px', height:'40px', borderRadius:'5px', border:'1px solid orange'}} />
-              <div style={{flex:1, overflow:'hidden'}}><div style={{fontSize:'14px', fontWeight:'bold', color:'orange', whiteSpace:'nowrap'}}>{currentSong.title}</div></div>
-              <button onClick={() => { if (audioRef.current?.paused) audioRef.current.play(); else audioRef.current?.pause(); }} style={{background:'orange', border:'none', borderRadius:'50%', width:'35px', height:'35px', fontWeight:'bold', cursor:'pointer'}}>
-                {isPlaying ? 'II' : '▶'}
-              </button>
-            </div>
-            <audio ref={audioRef} src={currentSong.url} onEnded={handleNextSong} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} controls style={{width:'100%', height:'32px', filter:'invert(1)'}} />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-const navBtn = { background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' };
-const activeNav = { ...navBtn, color: 'orange', borderBottom: '2px solid orange' };
-const inputS = { padding: '12px', background: '#080808', border: '1px solid #222', color: '#fff', borderRadius: '10px', width: '100%', marginBottom: '10px' };
-const saveBtnS = { background: 'orange', color: '#000', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', width: '100%' };
-const searchBarS = { width: '100%', padding: '15px', background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '15px', color: '#fff', outline: 'none' };
-const tabBtnS = { background: '#111', color: '#666', border: '1px solid #222', padding: '12px', borderRadius: '10px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' };
-const activeTabS = { ...tabBtnS, background: 'orange', color: '#000', borderColor: 'orange' };
-const songCardS = { background: '#080808', padding: '10px 15px', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', border: '1px solid #111', cursor: 'pointer' };
-const playerBarS = { position: 'fixed' as 'fixed', bottom: 0, width: '100%', background: 'rgba(5,5,5,0.95)', padding: '15px 20px', borderTop: '2px solid orange', zIndex: 1000 };
-const contactBoxS = { background: '#0a0a0a', padding: '15px', borderRadius: '12px', border: '1px solid #222', fontSize: '14px', marginBottom: '10px' };
- 
+              <img src={currentSong.cover || config.logo} style={{width:'40
